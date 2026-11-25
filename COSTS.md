@@ -28,16 +28,18 @@ at CRF 18 while the horizontal derivation is 26 MB.
 |---|---|---|---|---|
 | narration | 11 of 11 | `gemini-2.5-flash-preview-tts` | free tier, 10 requests/day | $0.008 |
 | character sheets | 2 | FLUX.2 klein 4B / flux-1-schnell | free tier (neurons) | $0.004 |
-| keyframes | 12 | FLUX.2 klein 4B | free tier (neurons) | $0.042 |
+| keyframes | 12 + 12 revision frames | FLUX.2 klein 4B (2 on 9B) | free tier (neurons) | $0.115 |
 | shots | 12 | no video endpoint, Ken Burns | local FFmpeg | $0.00 |
 | music | 12 cues | no music endpoint, synthesised bed | local | $0.00 |
-| **total** | | | | **≈ $0.05** |
+| **total** | | | | **≈ $0.12** |
 
 14 images at roughly 1,500 neurons each is about 21,000 neurons against a free
 allowance of 10,000 per day, which is why the 4B model was chosen over the 9B
 one: the same 14 frames on 9B would have been about 24,000 neurons for $0.24.
-Both were run against a free Workers plan, so the dollars above are list price
-rather than a charge.
+The A2 revision added 12 more candidate frames (FAILURES.md 12), $0.07 of the
+total, so read the estimate column as cost of the film plus its redo, not as the
+price of one pass. Both were run against a free Workers plan, so the dollars
+above are list price rather than a charge.
 
 The estimate that mattered was video: 4 hero shots on a Wan-class endpoint were
 budgeted at ~$0.30 per 5 s clip, or $1.20 for 89% of the spend. No such endpoint

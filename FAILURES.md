@@ -164,3 +164,28 @@ failure into a wait, and the cache means a resumed run costs nothing.
 
 **Lesson:** an HTTP 200 can still describe a quota error. The log line, not the
 status code, is what tells you which failure you have.
+
+## 12. Three hands on one girl
+
+**Symptom:** the first A2 keyframe (seed 31002) looked fine as a contact-sheet
+thumbnail and wrong at full size: a hennaed hand on each knee, a third hand
+folded beneath them, and fused fingers where the hands met.
+
+**Cause:** the prompt asked for "hennaed palms open on her lap", which puts four
+separate limb shapes into the brightest part of a 1080x1920 frame. The shot is
+also generated with the girl's reference sheet attached, and that sheet is a
+standing pose with crossed hands, so the model was composing two poses at once.
+
+**Fix:** re-posed the shot in the contract - "both hennaed hands folded quietly
+together on one knee, fingers interlocked, exactly two hands" - and then swept
+seeds instead of rewriting the prompt again. Twelve extra frames: ten on
+FLUX.2 klein 4B (two through the stage, eight as probes) and two on the 9B
+model. Of those, seed 31014 held both the seated corner and a two-hand pose.
+
+**Result:** two hands at output size, and the A2 clip and both exports rebuilt
+from the new frame. The probes are in `runs.jsonl` with their seeds, so the
+chosen one is reproducible with `make keyframes --force`.
+
+**Lesson:** inspect a still at the size the audience sees it, and treat a
+reference sheet as a composition instruction as well as a likeness one. It
+cost about $0.07 to learn that, roughly 2% of the project's image spend.

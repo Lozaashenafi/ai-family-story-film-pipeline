@@ -84,8 +84,8 @@
       "mode": "kenburns",
       "kenburns": { "zoom_from": 1.0, "zoom_to": 1.12, "pan": "in" },
       "keyframe": {
-        "prompt": "interior of a smoky highland hut at night, a girl of thirteen sits in a corner against the wall, knees drawn up, hennaed palms open on her lap, faded red wedding shawl around her shoulders, headscarf slipping, eyes lowered, one kerosene lamp on the floor throwing amber light and long shadows, cold indigo dark around her",
-        "seed": 31002,
+        "prompt": "interior of a smoky highland hut at night, a girl of thirteen sits in a corner against the wall, knees drawn up, both hennaed hands folded quietly together on one knee, fingers interlocked, exactly two hands, faded red wedding shawl around her shoulders, headscarf slipping, eyes lowered, one kerosene lamp on the floor throwing amber light and long shadows, cold indigo dark around her",
+        "seed": 31014,
         "characters": ["girl"]
       },
       "narration": {

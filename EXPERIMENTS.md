@@ -258,3 +258,26 @@ are logged as `fallback` because no endpoint exists. Real motion means paying fo
 four i2v clips (about 30 s of generated video) and accepting that a model may warp
 a painted face; the pipeline already supports it via `WAN_ENDPOINT`, so it is a
 configuration change, not a rewrite.
+
+## 15. What actually holds a shot's composition
+
+**Hypothesis:** A2's three-handed frame was a prompt problem, so rewording the
+hands would be enough and the seed could stay.
+
+**Test:** twelve frames of A2 over eleven seeds at 1080x1920 with the character
+reference sheet attached - ten on FLUX.2 klein 4B and two on the 9B model -
+compared at 1:1 and at the size the shot occupies in the film. Three prompt wordings: hands folded on
+one knee, hands in shadow, hands tucked into the shawl.
+
+**Result:** only three of the eleven kept the seated corner the shot is written
+for (31013, 31014, 31016); the rest returned the reference sheet's standing
+chibi pose, whatever the wording said. The 9B model was more reference-locked
+than the 4B, not less. Fingers changed with every seed, but composition did not
+change with the prompt as reliably as it changed with the seed.
+
+**Decision:** the seed is the composition control here, and the reference sheet
+outranks prompt text at this model size. Seed 31014 ships because it holds the
+corner and draws two hands. Repainting the girl's sheet as a seated gouache
+portrait would fix this class of error properly, but it invalidates nine
+keyframes and their clips, so it is recorded as the next revision instead of
+being done blind the night before the deadline.
