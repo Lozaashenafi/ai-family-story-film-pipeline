@@ -26,26 +26,29 @@ at CRF 18 while the horizontal derivation is 26 MB.
 
 | stage | calls | model | billed | estimate in `runs.jsonl` |
 |---|---|---|---|---|
-| narration | 11 + 3 re-spoken | `gemini-2.5-flash-preview-tts` | free tier, 10 requests/day | $0.010 |
-| character sheets | 2 | FLUX.2 klein 4B / flux-1-schnell | free tier (neurons) | $0.004 |
-| keyframes | 12 + 12 revision + 10 feedback frames | FLUX.2 klein 4B (2 on 9B) | free tier (neurons) | $0.150 |
-| shots | 12 | no video endpoint, Ken Burns | local FFmpeg | $0.00 |
+| narration | 11 + 3 re-spoken + 2 re-pronounced | `gemini-2.5-flash-preview-tts` | free tier, 10 requests/day | $0.011 |
+| character sheets | 2 + 4 repaints | FLUX.2 klein 4B / flux-1-schnell | free tier (neurons) | $0.015 |
+| keyframes | 12 + 12 revision + 10 feedback + 23 style-lock attempts | FLUX.2 klein 4B (2 on 9B) | free tier (neurons) | $0.210 |
+| shots | 12 x 3 render passes | no video endpoint, Ken Burns | local FFmpeg | $0.00 |
 | music | 12 cues | no music endpoint, synthesised bed | local | $0.00 |
-| **total** | | | | **≈ $0.16** |
+| **total** | | | | **≈ $0.24** |
 
-34 images at roughly 1,500 neurons each is about 51,000 neurons against a free
-allowance of 10,000 per day, which is why the work spread over three days and
-why the 4B model was chosen over the 9B one: the same frames on 9B would have
-been about five times the neurons. The A2 revision added 12 candidate frames and
-the user-test revision added 10 more (FAILURES.md 12 and 13), $0.11 of the
-total, so read the estimate column as the cost of the film plus its two redos,
-not as the price of one pass. All of it ran against a free Workers plan, so the
-dollars above are list price rather than a charge.
+59 images at roughly 1,500 neurons each is about 88,500 neurons against a free
+allowance of 10,000 per day, which is why the work spread over four days and why
+the 4B model was chosen over the 9B one: the same frames on 9B would have been
+about five times the neurons. The A2 revision added 12 candidate frames, the
+user-test revision added 10 more (FAILURES.md 12 and 13), and the style-lock
+revision added 23 in two aborted batches (FAILURES.md 17) - $0.19 of the total,
+so read the estimate column as the cost of the film plus its three redos, not as
+the price of one pass. All of it ran against a free Workers plan, so the dollars
+above are list price rather than a charge.
 
-The user-test pass is also where the free allowance ran out: the tenth frame of
-the day was accepted, the eleventh returned `HTTP 429` code 4006 (10,000 neurons
-exhausted). That is why A3 is cropped rather than repainted, and the reason the
-next revision waits for a new day or a paid plan.
+The style-lock pass is also where the free allowance ran out a second time, at
+13:20 UTC on 26 November: the sheet repaint was accepted, the frame after it
+returned `HTTP 429` code 4006 (10,000 neurons exhausted) three times in a row
+before the stage gave up. That is why the film ships with a post-production
+finish instead of a repaint, why A3 is cropped rather than repainted, and the
+reason the next revision waits for a new day or a paid plan.
 
 The estimate that mattered was video: 4 hero shots on a Wan-class endpoint were
 budgeted at ~$0.30 per 5 s clip, or $1.20 for 89% of the spend. No such endpoint

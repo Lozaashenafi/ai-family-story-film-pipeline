@@ -256,3 +256,119 @@ generation - asks a different question: does the face read as her, does the
 voice feel like her, is any invented detail wrong in a way that hurts. The same
 three friends will be asked the six questions again on this cut, and their
 second answers will be appended here rather than replacing the first.
+
+## User test 2 - two written notes on the same cut
+
+Two more people watched the 90 s cut before the family screening: one sent six
+numbered notes on craft, the other sent a frame-by-frame audit of the
+character's appearance. Both arrived as text (again kept with the consent
+record, summarised here), so neither is a replacement for the second round with
+the three friends; they are treated as the strongest available signal on two
+things the first round did not name: **consistency** and **legibility**.
+
+### What they said
+
+**Reviewer 1 - craft**
+
+- *Style consistency.* *"The visual style shifts noticeably between classic
+  watercolor-and-ink illustrations (like 00:00, 00:20, 00:48, and 01:10) and
+  semi-photorealistic digital renders (like 00:14, 00:28, 00:34, and 00:56)."*
+- *Motion.* *"Most shots are static images or very slow zooms";* asked for
+  *"subtle Ken Burns pans, gentle parallax, or micro-animations (like flickering
+  lamp light, drifting mist, or moving clouds)"*.
+- *Feet at 00:34.* *"Heavy, dark markings on her toes that look slightly more
+  like ink/scars than traditional henna, and the camera crop is quite tight."*
+- *Henna at 01:16.* *"Slightly smeared/reddish in a way that could be misread as
+  blood at a quick glance, whereas at 01:10 it reads much more clearly as faded
+  henna."*
+- *Subtitles.* *"White text with a thin black outline gets slightly lost against
+  bright backgrounds (such as the white dress at 00:34 or sunlit pavement at
+  00:56)."*
+- *Pronunciation.* *"A few AI-generated Amharic words sound slightly slurred or
+  mispronounced (for instance, around 00:01 and 01:00)."*
+
+**Reviewer 2 - appearance audit**
+
+- *Hair changes.* A short natural afro at 00:20, *"short, chunky twists or small
+  knots"* at 00:14, 00:56, 01:04, and *"shoulder-length braids or locs"* at 00:06,
+  00:28, 00:48.
+- *Age.* *"Roughly 7-9 years old"* in some frames, *"closer to 11-13"* in others,
+  *"especially in the Addis Ababa street shot (00:56), where she looks much
+  taller and gaunter than in the very next smiling frame (01:04)"*.
+- *Skin.* Warm golden-brown in the close-ups, *"deeper, cooler brown"* in the hut
+  and trail shots, and the base tone shifts *"between 00:56 and 01:04 despite
+  both being in bright daylight"*.
+- *The grandmother.* The face and hair stay consistent, but *"her shawl switches
+  from dark green (01:10) to white (01:16), and the henna on her right hand
+  changes from a dense cluster of orange-brown dots (01:10) to scattered red
+  streaks across her arm and hand (01:16)"*.
+- *Their proposed fix,* and it was the right one: *"Pick one hairstyle for the
+  young version"*, put it in every prompt, and *"generate one clear, neutral
+  portrait of her first, and feed that image as a character reference ... into
+  every scene prompt"*.
+
+### The cause, which was a bug and not a prompt problem
+
+`pipeline/keyframes.py` generated `outputs/refs/girl_sheet.png` and then never
+used it. `reference_for()` only looked at `characters[].source_photo`, and the
+girl has none - by design, because only the grandmother has a family photograph.
+So every shot of the girl was painted from text alone, and each prompt described
+her slightly differently ("a girl of about thirteen", "a girl of thirteen, tall
+and thin", "a thirteen-year-old Ethiopian girl's face"), which is exactly the
+hair, age and skin drift reviewer 2 catalogued. The grandmother was consistent
+for the opposite reason: her shots did use a reference.
+
+### What this revision changed
+
+| Note | Change | Where |
+|------|--------|-------|
+| Style splits between shots (1) | Style block rewritten to name brushwork and forbid photographic render; `"painterly realism"` and `"shallow depth of field"` removed, since both were instructions to be photographic | `style.block`, `style.negative` |
+| Style still split after that (1) | One film-wide finish pass - median 3, saturation 0.88, contrast 1.03, small edge return - applied to every shot after its move | `style.finish`, `pipeline/shots.py` |
+| Hair changes (2) | One hairstyle, stated once: *"short tightly coiled black twists cropped close to the head, no braids and no locs"* | `characters[0].description` |
+| Age and build drift (2, 1) | Age and build removed from the twelve scene prompts so the character block is the only place identity is described | `storyboard.json` shots |
+| Reference sheet never used (2) | Shots now inherit the *painted sheet* first and the photograph only as a fallback; the photo is consulted once, when the sheet is made | `keyframes.reference_for()` |
+| Sheets come back as a full standing figure (2) | `sheet_crop` crops the sheet to a face before it is saved, so a later shot cannot reproduce the whole silhouette | `characters[0].sheet_crop` |
+| Reference overrides framing (1, 2) | `use_reference` is now a rule: reference where the face *is* the subject (A3, C2, D1), text where the frame is (A2, A4, B1, B2, B4, C1, D2) | `storyboard.json` |
+| Henna read as blood (1) | Henna is *"a few small round dots of dried matte orange-brown henna"*; `blood`, `wet henna`, `red smear`, `stitches` added to the global negative; D2 says *"matte and faded"* | `style.negative`, D2 |
+| Ink-like toes, tight crop (1) | B2 asks for *"five clean toes ... clear smooth skin"*, no hands anywhere, no scratch; crop widened 1.15 -> 1.08 | `storyboard.json` B2 |
+| Subtitles lost on white (1) | Semi-transparent plate behind each line instead of a thin outline (BorderStyle 3, 9 px padding, 60% black) | `pipeline/assemble.py` |
+| Slurred words (1) | New `tts_text`: the voice can be given a different spelling from the subtitle. A2 and C1 re-spoken with a comma at the clause break; the other nine lines kept | `narration.tts_text` |
+| Static shots (1) | `haze` per shot: a blurred copy of the frame drifts over the sharp one at 12% opacity on the three fog shots | `haze`, `pipeline/shots.py` |
+
+### What was not adopted, and why
+
+- **Repainting all twelve frames from the corrected reference chain.** The full
+  batch was run twice. Both times every shot came back as a full-body frontal
+  portrait: the edit model treats a reference as a layout, not as a face, so
+  A2's crouch, A1's empty hut, B1's walk and B2's feet were all replaced by a
+  girl standing in the middle of the frame. The style was finally consistent and
+  the film was worse. The batch was rolled back and the frames were recovered
+  from the clip renders (see FAILURES 17). The corrected rules above are in the
+  contract and are what the next image-quota window will run.
+- **Parallax.** The contract has no depth map, and estimating one per frame was
+  not worth the remaining hours; `haze` plus the existing eased move, handheld
+  drift and flicker covers the part of the note that can be done locally.
+- **Top-level `+` on all moves.** Increasing zoom travel was tried and rejected:
+  the slow move is what keeps the film still, which two testers in round one
+  said they liked.
+
+### Known defects in this cut
+
+- **The frames are second generation.** Every keyframe was recovered from the
+  previous render's first frame, which is already graded, grained and slightly
+  zoomed, so the whole film is a little softer than the cut the three friends
+  watched. The finish pass hides most of it; a repaint would remove it.
+- **Pull-backs became pushes.** A frame recovered from a clip is the tightest
+  moment of the move, so the outward moves on A3, B3 and D2 became slow inward
+  ones. The story does not depend on them; the intended moves do.
+- **One style, two hands.** The finish narrows the gap between the watercolour
+  shots and the semi-real ones; it does not close it. A1 and B3 are still
+  visibly painted where A2 and C2 are painted over a photographic base.
+- **B2 still carries the dark markings on her toes** that reviewer 1 read as
+  ink or scars, and the crop is still tight. The wider crop and the toe negative
+  are in the contract and unrun; this is the frame the next repaint should fix
+  first, ahead of A3's hand.
+- **Pronunciation is only partly addressed.** Two lines were re-spoken with
+  clearer clause breaks and the others were not touched. Nobody in this round
+  could listen to the result before the deadline, so the fix is unverified by
+  ear and rests on the reviewer's two timestamps.

@@ -12,8 +12,12 @@ Likeness rules:
   - the style block always applies, so the result is a painting, not a
     photograph of her
 
-Run:  python -m pipeline.keyframes [--only A1,B1] [--force]
+Run:  python -m pipeline.keyframes [--only A1,B1 | refsheet:girl] [--force]
 Writes: outputs/keyframes/<shot>.png, outputs/refs/<character>_sheet.png
+
+`--only` with shot ids paints only those shots. Reference sheets are then left
+alone, because they are the most expensive thing to get wrong and the most
+expensive to redo: ask for one by name with `--only refsheet:girl`.
 """
 
 from __future__ import annotations
@@ -31,10 +35,27 @@ from .script import build_prompt
 FRAME = (1080, 1920)
 
 
-def reference_for(storyboard: dict, character_id: str, *, shot_id: str) -> Path | None:
+def reference_for(storyboard: dict, character_id: str, *, shot_id: str,
+                  for_sheet: bool = False) -> Path | None:
+    """The image a shot inherits its face from.
+
+    Priority is the approved character sheet and only then the source photo.
+    The order is the point: the sheet is already painted in the film's style, so
+    an edit of it comes back painted. Editing the photograph instead produces a
+    semi-realistic frame beside watercolour ones, which is exactly the drift
+    User test 2 reported. The photograph is therefore consulted once, when the
+    sheet is made, and never again per shot.
+
+    `for_sheet` stops the sheet being handed to itself.
+    """
     character = next(c for c in storyboard["characters"] if c["id"] == character_id)
+    sheet = character.get("reference_sheet")
+    if not for_sheet and sheet and (ROOT / sheet).exists():
+        return ROOT / sheet
     declared = character.get("source_photo")
     if not declared:
+        if sheet and not for_sheet:
+            print(f"    ! {character_id}: no {sheet} yet, generating from text only")
         return None
     path = ROOT / declared
     if not path.exists():
@@ -57,6 +78,12 @@ def mock_frame(storyboard: dict, shot: dict, target: Path) -> None:
 
 def run(storyboard: dict, args, only) -> None:
     mode = common.provider_mode()
+    sheets_wanted = {item.split(":", 1)[1] for item in (only or ()) if item.startswith("refsheet:")}
+    # None means "every shot"; an empty set means "no shots", which is what
+    # `--only refsheet:girl` has to mean. Keeping those two apart is why this is
+    # not `or None`.
+    shots_requested = {item for item in (only or ()) if not item.startswith("refsheet:")}
+    shot_only = shots_requested if only is not None else None
     palette_ok = bool(storyboard["style"].get("palette"))
     if not palette_ok:
         print("  ! no palette in the storyboard; keyframes will be less consistent")
@@ -65,10 +92,13 @@ def run(storyboard: dict, args, only) -> None:
     # when it needs to animate a character. They are also the artifact a human
     # reviewer checks before spending money on video.
     for character in storyboard["characters"]:
+        if only is not None and character["id"] not in sheets_wanted:
+            continue
         sheet = ROOT / (character.get("reference_sheet") or f"outputs/refs/{character['id']}_sheet.png")
         if not character.get("reference_sheet"):
             continue
         key = common.artifact_key("refsheet", character["id"], character["description"],
+                                  character.get("sheet_prompt"), character.get("sheet_crop"),
                                   storyboard["style"]["block"], character.get("source_photo"), mode)
         if common.is_fresh(sheet, key) and not args.force:
             print(f"  refsheet {character['id']}: cached")
@@ -77,15 +107,34 @@ def run(storyboard: dict, args, only) -> None:
             print(f"  refsheet {character['id']}: would generate")
             continue
         sheet.parent.mkdir(parents=True, exist_ok=True)
-        prompt = (f"character reference sheet, three-quarter portrait, neutral plain background, "
-                  f"{character['description']}. {storyboard['style']['block']}")
-        reference = reference_for(storyboard, character["id"], shot_id="refsheet")
+        # The sheet is the face every later shot inherits, so its pose is part of
+        # the contract rather than hardcoded here. The style block is appended
+        # for the same reason it is on a shot: the reference must already be a
+        # painting, or the image-edit shots copy photographic detail from it.
+        # No "character reference sheet" here on purpose. A sheet is conventionally
+        # a full-length turnaround, and the edit model then reproduces that whole
+        # standing figure inside every scene, overriding the framing the shot asks
+        # for. A cropped face gives the later shots identity without dictating
+        # composition.
+        pose = character.get("sheet_prompt", "head and shoulders portrait, plain background")
+        prompt = (f"{pose}, {character['description']}. {storyboard['style']['block']}")
+        reference = reference_for(storyboard, character["id"], shot_id="refsheet", for_sheet=True)
         generate(storyboard, prompt=prompt, target=sheet, seed=(character.get("seed") or 7),
                  reference=reference, shot_id="refsheet", stage="keyframes", mode=mode)
+        # A sheet is asked for as a face, and the model keeps painting a full
+        # standing figure anyway (it reads "reference" as a turnaround). Cropping
+        # here rather than fighting the prompt means every later shot inherits a
+        # face-shaped reference, so it cannot reproduce the whole silhouette
+        # inside a frame that wanted feet or a shadow.
+        crop = character.get("sheet_crop")
+        if crop:
+            temp = sheet.with_name(sheet.name + ".crop.png")
+            common.ff("-i", sheet, "-vf", f"crop={crop},scale=1080:-2", "-frames:v", "1", temp)
+            temp.replace(sheet)
         common.mark_fresh(sheet, key)
 
     for shot in storyboard["shots"]:
-        if only and shot["id"] not in only:
+        if shot_only is not None and shot["id"] not in shot_only:
             continue
         target = out_path("keyframes", f"{shot['id']}.png")
         prompt = build_prompt(storyboard, shot)
@@ -114,7 +163,7 @@ def run(storyboard: dict, args, only) -> None:
         if args.dry_run:
             print(f"  {shot['id']}: would generate ({'with' if reference else 'without'} reference)")
             continue
-        print(f"  {shot['id']}: painting{' from the family photograph' if reference else ''} ...")
+        print(f"  {shot['id']}: painting{' from ' + rel(reference) if reference else ''} ...")
         generate(storyboard, prompt=prompt, target=target, seed=shot["keyframe"].get("seed", 1),
                  reference=reference, shot_id=shot["id"], stage="keyframes", mode=mode,
                  scene=shot["scene"], negative=negative)

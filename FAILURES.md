@@ -290,3 +290,76 @@ so the next edit has somewhere obvious to go.
 moment a conditional enters the list - and `assemble` will happily build from
 stale clips if the durations are not checked, which is how the broken run still
 produced a 90 s file before the fix.
+
+## 17. The reference was never used, and then it ate the film
+
+**Symptom:** two written reviews of the same cut named opposite faults. One said
+the style swings between watercolour and semi-real, and that the girl's hair, age
+and skin tone change shot to shot. The other said every shot had become a
+standing, full-body, front-facing portrait.
+
+**Cause:** two bugs in a row.
+
+1. `reference_for()` only consulted `characters[].source_photo`. The girl has no
+   photograph, so `outputs/refs/girl_sheet.png` was generated, cached, paid for -
+   and then never handed to a single shot. Twelve prompts each described her
+   independently, which is precisely the drift reviewer 2 catalogued. The
+   grandmother was consistent because her shots *did* have a photo to edit.
+2. Fixing that exposed the second problem: FLUX.2 in edit mode treats the
+   reference as a layout, not as a face. Given a full-length sheet, it returned a
+   full-length figure in every scene. A2 lost its crouch, A1 its empty hut, B1
+   its walk, B2 its feet, C2 its close-up. Twelve standing portraits in twelve
+   costumes, one per beat of the story.
+
+**Fix:** the sheet is now the reference (photo only when no sheet exists), sheets
+are cropped to a face by `sheet_crop`, and `use_reference` became a rule -
+reference where the face is the subject, text where the frame is.
+
+**Result:** the full batch was run twice, 23 image calls, and rolled back both
+times. The frames were recovered from the previous clip renders and re-rendered
+under a single finish pass. The corrected rules are in the contract, unrun,
+waiting on image quota.
+
+**Lesson:** a generated artifact is not used until something reads it. A sheet
+that is never referenced is a cost with no behaviour, and the fix for
+inconsistency can be a worse film than the inconsistency - twelve correct frames
+that all look the same are not a film.
+
+## 18. `--only` on narration rewrote the whole timing file
+
+**Symptom:** after re-recording two lines with `--only A2,C1`, `timing.json` had
+`narration_s: 0.00` for the other nine shots, and every shot had snapped back to
+its storyboard length (B2 8.43 s -> 6.00 s).
+
+**Cause:** the layout step builds `timings` from the loop over shots, and the
+loop skips everything outside `--only`. The skipped lines were therefore treated
+as silent, and the film was re-cut as if eight lines had been deleted.
+
+**Fix:** the stage now measures every processed narration wav that already exists
+before it speaks anything, so a partial re-record re-times one line and leaves
+the layout of the other eight intact.
+
+**Result:** 90.0 s total, 59.8 s of speech, shot durations identical to the
+previous cut.
+
+**Lesson:** `--only` is a cache key, not a scope for the output. Any stage that
+derives a whole-film artifact must read the untouched shots from disk, or a
+one-line edit silently becomes a different film.
+
+## 19. The haze that looked like a fogged lens
+
+**Symptom:** the first atmosphere pass washed every frame it touched, including
+the subject, and read as condensation on the glass rather than mist in the air.
+
+**Cause:** a full-frame blurred copy at 18-28% opacity is a global veiling: it
+lifts the blacks of the foreground along with the sky.
+
+**Fix:** strength dropped to 12% and the layer restricted to the three shots
+where the scene already contains fog (B1, B3, B4). A1's smoke and C1's dust were
+dropped - smoke needs a plume, not a veil.
+
+**Result:** a perceptible drift between frames, no visible flattening.
+
+**Lesson:** an atmosphere effect has to be placed where the air is, not laid over
+the whole frame. The first version was invisible at 18% and destructive at 28%,
+which means the usable range was narrow and the effect was the wrong one.

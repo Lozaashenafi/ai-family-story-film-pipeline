@@ -62,8 +62,12 @@ def ass_header(res_x: int, res_y: int, *, font: str, size: int, margin_v: int) -
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
         "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
         "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        f"Style: Sub,{font},{size},&H00FFFFFF,&H00FFFFFF,&H00101010,&H64000000,"
-        f"0,0,0,0,100,100,0,0,1,2.2,1.2,2,{int(res_x * 0.08)},{int(res_x * 0.08)},{margin_v},1",
+        # BorderStyle 3 draws a box behind each line and pads it by Outline, so a
+        # semi-transparent plate travels with the words. A bare outline was
+        # legible on the indigo hut and lost on the white dress and the sunlit
+        # pavement; the plate is what survives both.
+        f"Style: Sub,{font},{size},&H00FFFFFF,&H00FFFFFF,&H00101010,&H66000000,"
+        f"0,0,0,0,100,100,0,0,3,9,0,2,{int(res_x * 0.08)},{int(res_x * 0.08)},{margin_v},1",
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",

@@ -18,31 +18,30 @@
     }
   },
   "style": {
-    "block": "hand-painted gouache and ink illustration on coarse paper, visible brushwork and paper grain, painterly realism, Ethiopian highland palette, muted and slightly desaturated, soft natural light, shallow depth of field, fine film grain, no text, no lettering, no watermark",
-    "negative": "photorealistic photograph, 3d render, cgi, plastic skin, extra fingers, deformed hands, text, letters, watermark, logo, oversaturated, neon, modern technology",
+    "block": "hand-painted gouache and ink illustration on coarse toned paper, visible brush marks and dry-brush edges, flat matte colour shapes, thin restrained ink line, paper fibre texture, Ethiopian highland palette, muted and slightly desaturated, soft diffuse light, a painting and not a photograph, no photographic detail, no realistic skin texture, no text, no lettering, no watermark",
+    "negative": "photograph, photorealistic, dslr photo, realistic skin pores, bokeh, 3d render, cgi, plastic skin, extra fingers, deformed hands, extra toes, blood, open wound, red smear, wet henna, stitches, text, letters, watermark, logo, oversaturated, neon, modern technology, text on the image",
     "palette": {
       "scene_a": "cold indigo night, charcoal smoke, one amber kerosene glow",
       "scene_b": "slate-blue pre-dawn fog, wet grey stone, pale ochre ridge",
       "scene_c": "warm gold afternoon, terracotta, cobalt sky",
       "scene_d": "honey lamplight, deep green, white cotton, soft shadow"
     },
-    "grades": {
-      "a": "eq=saturation=0.95:contrast=1.02",
-      "b": "eq=saturation=0.80:contrast=1.08:brightness=-0.02",
-      "c": "eq=saturation=1.0:contrast=1.03"
-    }
+    "finish": "median=3,eq=saturation=0.88:contrast=1.03,unsharp=5:5:0.35"
   },
   "characters": [
     {
       "id": "girl",
-      "description": "an Ethiopian girl of about thirteen, slender, deep brown skin, large dark almond eyes, short tightly coiled hair, a faded red hand-woven wedding shawl over a white cotton dress with a fine tibeb border, henna patterns on both palms, barefoot",
+      "description": "a lean teenage Ethiopian girl of thirteen, long limbs and narrow shoulders, warm medium-deep brown skin, large dark almond eyes, short tightly coiled black twists cropped close to the head, no braids and no locs, a faded red hand-woven wedding shawl over a white cotton dress with a fine tibeb border, a few small round dots of dried matte orange-brown henna on both palms, barefoot",
+      "sheet_prompt": "head and shoulders portrait cropped close at the collarbone, the face filling the frame, facing the camera, calm neutral expression, plain warm grey background, no full figure",
+      "sheet_crop": "iw:ih*0.34:0:ih*0.02",
       "reference_sheet": "outputs/refs/girl_sheet.png",
       "source_photo": null,
       "seed": 1101
     },
     {
       "id": "grandmother",
-      "description": "the same woman at about seventy, deep brown skin, fine lines around the eyes, silver-threaded hair under a white netela, steady kind gaze, faded henna on her palms, a dark green dress with a tibeb border, a small silver cross, structure of face and brow taken from the family photograph",
+      "description": "the same woman at about seventy, deep brown skin, deep lines around the eyes and mouth, short silver-grey hair with soft waves under a white cotton netela, thin hands resting quietly, steady kind gaze, a few small round dots of dried matte orange-brown henna on her right palm and the back of her right hand, a dark green dress with a tibeb border, a small silver cross, structure of face and brow taken from the family photograph",
+      "sheet_prompt": "head and shoulders portrait facing the camera, calm kind expression, plain grey background",
       "reference_sheet": "outputs/refs/grandmother_sheet.png",
       "source_photo": "assets/refs/grandmother_source.png",
       "seed": 2202
@@ -93,15 +92,17 @@
         "pan": "in"
       },
       "keyframe": {
-        "prompt": "interior of a smoky highland hut at night, a girl of thirteen sits in a corner against the wall, knees drawn up, both hennaed hands folded quietly together on one knee, fingers interlocked, exactly two hands, faded red wedding shawl around her shoulders, headscarf slipping, eyes lowered, one kerosene lamp on the floor throwing amber light and long shadows, cold indigo dark around her",
+        "prompt": "interior of a smoky highland hut at night, she sits low in a corner against the wall with her knees drawn up to her chest in a crouch, small inside the room, both hands folded quietly together on one knee, fingers interlocked, exactly two hands with five fingers on each, faded red wedding shawl around her shoulders, headscarf slipping, eyes lowered, one kerosene lamp on the floor throwing amber light and long shadows, cold indigo dark around her, middle distance so the room is visible around her",
         "seed": 31014,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
         "text": "በዚያች ሌሊት ዕድሜዬ ገና አልቆጠረም ነበር።",
+        "tts_text": "በዚያች ሌሊት፣ ዕድሜዬ ገና አልቆጠረም ነበር።",
         "subtitle": "That night, I had not yet counted my years."
       },
       "ambience": "muffled drums through a wall, fire crackle, a woman's laugh far off"
@@ -115,12 +116,13 @@
       "camera": "eye level, locked",
       "mode": "kenburns",
       "kenburns": {
-        "zoom_from": 1.24,
-        "zoom_to": 1.16,
+        "zoom_from": 1.0,
+        "zoom_to": 1.02,
         "pan": "up"
       },
       "keyframe": {
-        "prompt": "close-up of a thirteen-year-old Ethiopian girl's face lit only by a kerosene lamp, one tear catching the light on her cheek, wet eyelashes, hennaed fingers at the edge of the frame, faded red shawl at her throat, deep indigo shadow behind her",
+        "prompt": "tight close-up of her face lit only by a kerosene lamp, the face filling the frame, one clear tear on her cheek catching the light, wet eyelashes, faded red shawl at her throat, no hands in frame, deep indigo shadow behind her",
+        "negative": "red streaks on the face, tears of blood, wet henna on the face, hand, fingers, blood",
         "seed": 31003,
         "characters": [
           "girl"
@@ -151,7 +153,8 @@
         "seed": 31004,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
@@ -170,24 +173,26 @@
       "mode": "wan",
       "motion": "fog rolls slowly across the ridge, the edge of her shawl lifts in the wind, camera tracks gently beside her at walking speed",
       "kenburns": {
-        "zoom_from": 1.02,
-        "zoom_to": 1.05,
+        "zoom_from": 1.0,
+        "zoom_to": 1.03,
         "pan": "right"
       },
       "keyframe": {
-        "prompt": "pre-dawn highland path, a girl of thirteen walking fast barefoot between wet stone walls, thin and grey with exhaustion, heavy fog swallowing the path behind her, her red shawl clutched to her chest, her white dress soaked at the hem, cold slate-blue light, bare wrists with no watch and no bracelet, mountains barely visible above the mist",
+        "prompt": "pre-dawn highland path, she walks fast barefoot between wet stone walls, thin and grey with exhaustion, heavy fog swallowing the path behind her, her red shawl clutched to her chest, her white dress soaked at the hem, cold slate-blue light, bare wrists with no watch and no bracelet, mountains barely visible above the mist",
         "negative": "wristwatch, watch, bracelet, bangle, ring, jewellery, extra fingers, deformed hands, extra toes, modern clothing",
         "seed": 31005,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
         "text": "ግን ደግሞ ከፍርሃቴ ይልቅ የነጻነት ጥማቴ በረታ።",
         "subtitle": "But a thirst for freedom grew louder than my fear."
       },
-      "ambience": "wind, wet gravel underfoot, one dog barking far away"
+      "ambience": "wind, wet gravel underfoot, one dog barking far away",
+      "haze": 0.12
     },
     {
       "id": "B2",
@@ -199,16 +204,17 @@
       "mode": "kenburns",
       "kenburns": {
         "zoom_from": 1.0,
-        "zoom_to": 1.15,
+        "zoom_to": 1.08,
         "pan": "in"
       },
       "keyframe": {
-        "prompt": "extreme close-up of a girl's two bare feet on a wet stone mountain path, five toes on each foot, a thorn scratch and a smear of blood on one heel, dew beading on grass at the frame edge, mud on the hem of a white cotton dress, cold grey-blue dawn light, both hands out of frame",
-        "negative": "six toes, extra toes, deformed feet, hand, fingers, bracelet, wristwatch, jewellery",
+        "prompt": "a low view of two bare feet standing on a wet stone mountain path, five clean toes on each foot, clear smooth skin, dew beading on the grass at the frame edge, the muddied hem of a white cotton dress hanging above the ankles, the path and the hem filling the frame so the feet sit inside a scene rather than filling it, cold grey-blue dawn light, no hands anywhere in the frame",
+        "negative": "six toes, extra toes, deformed feet, dark ink markings on the toes, henna on the feet, toe tattoos, scars, stitches, sutures, scabs, wound, hand, arm, fingers, bracelet, wristwatch, jewellery",
         "seed": 31016,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
@@ -226,8 +232,8 @@
       "camera": "high angle, tilt down",
       "mode": "kenburns",
       "kenburns": {
-        "zoom_from": 1.1,
-        "zoom_to": 1.0,
+        "zoom_from": 1.0,
+        "zoom_to": 1.02,
         "pan": "out"
       },
       "keyframe": {
@@ -241,7 +247,8 @@
         "text": "እሾሁ እግሬን ቢወጋኝም፣ ድንጋዩ ቢያደማኝም...",
         "subtitle": "The thorn cut my feet, the stone bruised me..."
       },
-      "ambience": "wind, cloth flapping, a bus engine growing audible"
+      "ambience": "wind, cloth flapping, a bus engine growing audible",
+      "haze": 0.12
     },
     {
       "id": "B4",
@@ -258,18 +265,20 @@
         "pan": "none"
       },
       "keyframe": {
-        "prompt": "vast Ethiopian highland valley at first light, a tiny girl in a white dress standing at the edge of a switchback road, an old bus far below with a thin plume of diesel smoke, ridges layered in blue fog, pale ochre grass, cold and enormous and quiet",
+        "prompt": "vast Ethiopian highland valley at first light, she stands tiny in a white dress at the edge of a switchback road, an old bus far below with a thin plume of diesel smoke, ridges layered in blue fog, pale ochre grass, cold and enormous and quiet",
         "seed": 31008,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
         "text": "ከኋላዬ ካለው እስር ቤት ይልቅ ከፊቴ ያለው ያልታወቀ መንገድ ናፈቀኝ።",
         "subtitle": "...but the unknown road ahead drew me more than the prison behind."
       },
-      "ambience": "wind over open ground, distant engine, one bird"
+      "ambience": "wind over open ground, distant engine, one bird",
+      "haze": 0.12
     },
     {
       "id": "C1",
@@ -285,16 +294,18 @@
         "pan": "in"
       },
       "keyframe": {
-        "prompt": "a girl of thirteen, tall and thin, in a rumpled white cotton dress standing still in the middle of a busy Addis Ababa street in warm late-afternoon gold light, tall buildings and crowds of people passing in soft blurred motion around her, minibus taxis, dust in the sunbeams, her bare feet on hot asphalt, dazed and exhausted, clutching the shawl, people walking past without looking at her, warm gold and terracotta",
+        "prompt": "she stands still in a rumpled white cotton dress in the middle of a busy Addis Ababa street in warm late-afternoon gold light, tall buildings and crowds of people passing, blurred by their own movement, minibus taxis, dust in the sunbeams, her bare feet on hot asphalt, dazed and exhausted, clutching the shawl, people walking past without looking at her, warm gold and terracotta",
         "negative": "wristwatch, watch, bracelet, jewellery, toddler, small child",
         "seed": 31009,
         "characters": [
           "girl"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
         "text": "አውቶቡሱ አዲስ አበባ ወሰደኝ፤ በኪሴ ምንም አልነበረኝም፤",
+        "tts_text": "አውቶቡሱ፣ አዲስ አበባ ወሰደኝ፤ በኪሴም ምንም አልነበረም፤",
         "subtitle": "The bus took me to Addis Ababa; I had nothing in my pocket,"
       },
       "ambience": "city traffic, many voices, a horn, a street vendor calling"
@@ -313,13 +324,12 @@
         "pan": "in"
       },
       "keyframe": {
-        "prompt": "close portrait of a thirteen-year-old Ethiopian girl in a city street, head and shoulders, a tall slim adolescent on the edge of adulthood, the first real smile breaking across her face, a tall glass building and blurred passing figures behind her, warm gold afternoon light on her cheek, dust and pollen in the air, white cotton dress with a tibeb border at her shoulder, the picture reaches every edge of the frame",
+        "prompt": "extremely tight portrait in a city street, head and shoulders only, the face filling most of the frame, the first real smile breaking across her face, a tall glass building and blurred passing figures behind her, warm gold afternoon light on her cheek, dust and pollen in the air, white cotton dress with a tibeb border at her shoulder, the picture reaches every edge of the frame",
         "negative": "paper border, white frame, deckled edge, vignette border, small child, eight years old, toddler, chibi, oversized head, cartoon proportions, wristwatch, bracelet, bangle, jewellery, knit cardigan",
         "seed": 31022,
         "characters": [
           "girl"
-        ],
-        "use_reference": false
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -343,7 +353,7 @@
         "pan": "in"
       },
       "keyframe": {
-        "prompt": "an elderly Ethiopian woman of about seventy sitting in a warm room at a coffee ceremony, white netela over silver-threaded hair, dark green dress with a tibeb border, steam rising from a black clay coffee pot, small cups on a tray, honey lamplight, her hands resting in her lap, faded henna on her palms, calm and proud",
+        "prompt": "she sits in a warm room at a coffee ceremony, white netela over her hair, dark green dress with a tibeb border, steam rising from a black clay coffee pot, small cups on a tray, honey lamplight, her hands resting in her lap, calm and proud",
         "seed": 31011,
         "characters": [
           "grandmother"
@@ -365,16 +375,18 @@
       "camera": "pull back slowly to medium",
       "mode": "kenburns",
       "kenburns": {
-        "zoom_from": 1.15,
-        "zoom_to": 1.0,
+        "zoom_from": 1.0,
+        "zoom_to": 1.02,
         "pan": "out"
       },
       "keyframe": {
-        "prompt": "close-up of two hands resting together in a lap, an old woman's hand with faded henna and a pale scar across the knuckles held by a younger hand with a thin silver ring, white netela and dark green cloth at the frame edge, honey lamplight, steam drifting through the light",
+        "prompt": "close-up of two hands resting together in a lap, an old woman's thin hand with a few small round dots of dried orange-brown henna, matte and faded, and a pale healed scar across the knuckles held by a younger hand with a thin silver ring, white cotton netela and dark green cloth at the frame edge, honey lamplight, steam drifting through the light, no face in frame",
+        "negative": "blood, red stain, open wound, cut, bruise, smeared ink, red streaks, wet henna, face, portrait",
         "seed": 31012,
         "characters": [
           "grandmother"
-        ]
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",

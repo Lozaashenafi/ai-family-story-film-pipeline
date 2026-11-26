@@ -37,11 +37,12 @@ def load_timing() -> dict:
 
 
 # Bump when the moving-still treatment changes, so cached clips re-render.
-RENDERER = "living-still-v1"
+RENDERER = "living-still-v3"
 
 
 def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_to: float,
-                    pan: str, seed: int = 1, grade: str | None = None) -> None:
+                    pan: str, seed: int = 1, grade: str | None = None,
+                    finish: str | None = None, haze: float = 0.0) -> None:
     """Animate a still so it reads as filmed rather than as a photo on a slider.
 
     Four treatments, all deterministic and all rendered locally:
@@ -54,8 +55,17 @@ def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_t
                    stops the frame feeling locked to a tripod.
       flicker      a very small per-frame brightness wobble, the way a kerosene
                    lamp or a practical light actually behaves.
-      grade        the scene's eq correction from style.grades, if any. A scene
-                   is graded as a scene, not per shot, so its shots still match.
+      finish       style.finish: the film-wide painterly pass (median, gentle
+                   desaturation, a touch of edge return). It runs on every shot,
+                   which is what makes twelve generated frames read as one film
+                   even when the generator drew them in slightly different
+                   hands. It is applied last so it also hides the softness of
+                   frames recovered from an earlier render.
+      haze         optional, per shot: a heavily blurred copy of the frame drifts
+                   slowly over the sharp one at low opacity, so fog, smoke and
+                   dust move inside a still that is otherwise only being pushed.
+                   Ken Burns can move the camera but it cannot move the weather,
+                   which is what the second test round asked for.
       grain        temporal luma noise with a fixed seed: adds texture and, because
                    the seed is fixed, keeps the stage reproducible.
 
@@ -96,25 +106,48 @@ def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_t
     )
     if grade:
         chain += f",{grade}"
-    chain += f",noise=c0s=3:c0f=t+u:c0_seed={seed},unsharp=5:5:0.35,format=yuv420p"
+    if finish:
+        chain += f",{finish}"
+    chain += f",noise=c0s=3:c0f=t+u:c0_seed={seed}"
+    if haze > 0:
+        # One input, two layers: the sharp frame, and a blurred copy cropped
+        # through a slowly orbiting window and scaled back to frame size. Because
+        # the window moves, the blur moves with it, and a still starts breathing.
+        # The seeded grain goes on the sharp layer so the veil stays smooth.
+        chain += (
+            f",split[sharp][veil];"
+            f"[veil]gblur=sigma=22,"
+            f"crop=w=iw*0.80:h=ih*0.80"
+            f":x='(iw-ow)/2+sin(t*0.17)*iw*0.07'"
+            f":y='(ih-oh)/2+sin(t*0.11)*ih*0.04',"
+            f"scale={WIDTH}:{HEIGHT},format=yuva420p,"
+            f"colorchannelmixer=aa={haze:.2f}[veil2];"
+            f"[sharp][veil2]overlay=shortest=1"
+        )
+    chain += ",format=yuv420p"
     common.ff(
         "-loop", "1", "-framerate", FPS, "-i", source, "-t", round(duration, 3),
-        "-vf", chain,
+        "-filter_complex", chain,
         "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
         "-pix_fmt", "yuv420p", "-r", FPS, target,
     )
 
 
-def conform(source, target, *, duration: float, loop: bool, grade: str | None = None) -> None:
-    """Force a generated clip onto the film's grid: 1080x1920, 24 fps, exact length."""
+def conform(source, target, *, duration: float, loop: bool, grade: str | None = None,
+            finish: str | None = None) -> None:
+    """Force a generated clip onto the film's grid: 1080x1920, 24 fps, exact length.
+
+    A real image-to-video clip goes through the same finish pass as a moving
+    still, or the four animated shots would be the only ones not painted.
+    """
     args = ["-i", source]
     if loop:
         args = ["-stream_loop", "-1", "-i", source]
+    tail = (f"{grade}," if grade else "") + (f"{finish}," if finish else "")
     common.ff(
         *args, "-t", round(duration, 3),
         "-vf", f"scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
-               f"crop={WIDTH}:{HEIGHT},fps={FPS}," + (f"{grade}," if grade else "") +
-               "format=yuv420p",
+               f"crop={WIDTH}:{HEIGHT},fps={FPS}," + tail + "format=yuv420p",
         "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
         "-pix_fmt", "yuv420p", target,
     )
@@ -178,9 +211,11 @@ def run(storyboard: dict, args, only) -> None:
         duration = durations.get(shot["id"], shot["duration_s"])
         kb = shot.get("kenburns") or {}
         grade = (storyboard.get("style", {}).get("grades") or {}).get(shot["scene"].lower())
+        finish = storyboard.get("style", {}).get("finish")
+        haze = float(shot.get("haze") or 0.0)
         key = common.artifact_key(
             "clip", shot["id"], common.sha256_file(keyframe), duration, shot["mode"], kb,
-            shot.get("motion"), mode, RENDERER, grade,
+            shot.get("motion"), mode, RENDERER, grade, finish, haze,
         )
         if common.is_fresh(target, key) and not args.force:
             print(f"  {shot['id']}: cached")
@@ -194,7 +229,7 @@ def run(storyboard: dict, args, only) -> None:
         if shot["mode"] == "wan" and mode == "real":
             temp = try_video(storyboard, shot, keyframe, duration, shot["keyframe"].get("seed", 1))
             if temp:
-                conform(temp, target, duration=duration, loop=True, grade=grade)
+                conform(temp, target, duration=duration, loop=True, grade=grade, finish=finish)
                 temp.unlink(missing_ok=True)
                 rendered = True
                 common.log_run(stage="shots", operation="render", provider="local", model="ffmpeg",
@@ -207,7 +242,7 @@ def run(storyboard: dict, args, only) -> None:
                 keyframe, target, duration=duration,
                 zoom_from=kb.get("zoom_from", 1.0), zoom_to=kb.get("zoom_to", 1.08),
                 pan=kb.get("pan", "in"), seed=shot["keyframe"].get("seed", 1),
-                grade=grade,
+                grade=grade, finish=finish, haze=haze,
             )
             if shot["mode"] == "wan" and mode == "real":
                 common.log_run(stage="shots", operation="render", provider="local", model="ffmpeg",

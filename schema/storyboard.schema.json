@@ -61,7 +61,11 @@
       "required": ["block", "negative"],
       "additionalProperties": false,
       "properties": {
-        "block": {
+        "finish": {
+      "type": "string",
+      "description": "One FFmpeg filter chain applied to every shot after its grade and before the grain, e.g. a median blur and a small saturation cut. This is the film-wide look pass: it is what makes frames painted in different sessions read as one film."
+    },
+    "block": {
           "type": "string",
           "minLength": 20,
           "description": "Fixed prompt text appended to every keyframe prompt. Never re-worded per shot."
@@ -97,6 +101,14 @@
           "reference_sheet": {
             "type": ["string", "null"],
             "description": "Path to the approved golden reference image, relative to the repo root."
+          },
+          "sheet_prompt": {
+            "type": "string",
+            "description": "Pose and framing of the reference sheet. Defaults to a head and shoulders portrait. The face is what every later shot inherits, so keep it front-on, evenly lit and neutral."
+          },
+          "sheet_crop": {
+            "type": "string",
+            "description": "FFmpeg crop geometry applied to the generated sheet before it is saved, e.g. iw:ih*0.34:0:ih*0.02. Use it when the model paints a full figure after being asked for a face: a face-shaped reference is what stops every later shot becoming a standing portrait."
           },
           "source_photo": {
             "type": ["string", "null"],
@@ -157,7 +169,13 @@
             "enum": ["wan", "kenburns", "hold"],
             "description": "wan: image-to-video on GPU. kenburns: slow pan/zoom over the still in FFmpeg. hold: static still."
           },
-          "motion": {
+          "haze": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 0.5,
+        "description": "Opacity of a slowly drifting blurred veil over the shot, 0 to 0.5. Use it where the scene already implies moving air or smoke: it makes a still breathe where a camera move alone cannot. Leave it off interiors, which have nothing to drift."
+      },
+      "motion": {
             "type": ["string", "null"],
             "description": "Motion and camera only. Required when mode is wan."
           },
@@ -207,6 +225,10 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "English subtitle line(s). Max two lines of about 40 characters."
+              },
+              "tts_text": {
+                "type": "string",
+                "description": "Optional spelling sent to the voice instead of `text`, for a word the model slurs. The meaning stays in `text` and the audience reads `subtitle`."
               }
             }
           },

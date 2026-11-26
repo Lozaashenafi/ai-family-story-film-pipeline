@@ -83,10 +83,34 @@ line decides how long its shot is, inside the 90-second ceiling. See
 
 The performance is cached at natural pace in `outputs/audio/tts/` and re-timed
 afterwards, so `voices.narrator.speed` changes the pace without another TTS call.
-Two other fields exist for revisions that should not cost a full rebuild:
-`style.grades` (an eq correction per scene, applied to every clip in it) and a
-per-shot `keyframe.negative` (fixes one frame's defect without invalidating the
-other eleven).
+A line may also carry `narration.tts_text`: a different spelling sent to the
+voice, for a word the model slurs. The meaning stays in `text` and the audience
+reads `subtitle`.
+
+Five fields exist for revisions that should not cost a full rebuild:
+
+| field | what it fixes |
+|---|---|
+| `keyframe.negative` | one frame's defect (a watch, six toes) without touching the other eleven |
+| `style.finish` | the whole film's painterly look, as one FFmpeg chain applied after the move and before the grain |
+| `haze` (per shot) | moving air over a still: a blurred copy of the frame drifts at low opacity where the scene has fog |
+| `characters[].sheet_crop` | a sheet that came back as a full standing figure, cropped to a face before any shot inherits it |
+| `keyframe.use_reference` | whether a shot inherits the character's face at all - reference where the face is the subject, text where the frame is |
+
+Identity is described once, in `characters[].description`, and copied into every
+prompt that contains that character. Scene prompts deliberately do not repeat
+age, height or hair: three promptings of "a girl of about thirteen" is how a film
+ends up with three girls.
+
+A shot inherits its face from its character's **reference sheet**, and only from
+the `source_photo` if no sheet exists. That order matters: the sheet is already
+painted in the film's style, so an edit of it stays painted, while an edit of a
+photograph comes back photographic. The photograph is therefore consulted once,
+when the sheet is made. Repaint one sheet without touching any shot:
+
+```
+.venv/bin/python -m pipeline.keyframes --only refsheet:girl
+```
 
 ## Where things land
 

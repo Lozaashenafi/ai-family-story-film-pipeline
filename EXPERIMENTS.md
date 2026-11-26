@@ -344,3 +344,60 @@ well, and the quota ran out before another seed could be tried.
 key, and they fixed two of four defects outright. The two that failed are
 evidence that at 4B the image reference outranks negative text, which is the same
 lesson as experiment 15 from the other direction.
+
+## 19. Is the style split a prompt problem or a source problem?
+
+**Hypothesis:** the same style block on all twelve shots should produce one look,
+so a split means something else is varying - most likely the image reference.
+
+**Test:** reviewed which shots had drifted. Every frame the reviewer called
+semi-photoreal (A3, B1, B2, C1, C2) had been painted from a different prompt
+wording of the character; every frame called watercolour (A1, A4, B3, B4, D1)
+was either an establishing shot with no character or a shot with a reference.
+Then the style block was rewritten to remove *"painterly realism"* and *"shallow
+depth of field"* - both of which ask for a photograph - and the whole batch was
+repainted with the sheet as reference.
+
+**Result:** the rewrite plus a reference did unify the look: all twelve frames
+came back as one painting style, with the same hair, the same age, the same
+clothes. It also flattened every composition into a standing portrait, which was
+worse than the drift. A second batch with a face-cropped sheet and text-only
+prompts on the wide shots could not be completed - image quota ran out mid-batch.
+
+**Decision:** the split is a *source* problem, not a prompt problem: one model,
+two input modes (text-to-image and image-edit) produce two aesthetics. The
+practical fix is to pick one mode per shot by what the frame is for, and to run
+one film-wide finish pass so the two modes land in the same family.
+
+## 20. How much painterly finish does a photographic frame need?
+
+**Hypothesis:** a median blur plus a small saturation cut is enough to bring a
+semi-real frame into the watercolour family without destroying the faces.
+
+**Test:** swept `median` radius and saturation on recovered B1, A2 and C2 frames,
+viewing stills at 540 px wide.
+
+**Result:** `median=3` removed the pore-level detail that made the frames read as
+renders, and `unsharp=5:5:0.35` returned enough edge to keep the eyes and the
+cloth pattern from going plastic. Radius 5 erased the tibeb embroidery and the
+henna dots. Saturation below 0.85 turned the warm Addis shots grey.
+
+**Decision:** `median=3,eq=saturation=0.88:contrast=1.03,unsharp=5:5:0.35` as
+`style.finish`, applied to all twelve shots after the move and before the grain.
+It is one string in the contract, so the whole film's look is now one line.
+
+## 21. Can a blurred-veil shader stand in for moving weather?
+
+**Hypothesis:** with no video endpoint, a drifting blurred copy of the frame can
+give a still the micro-motion the second round asked for.
+
+**Test:** `haze` at 0.18 on A1, 0.22 on B1 and B4, 0.24 on B3, 0.10 on C1,
+comparing frames 4-5 s apart.
+
+**Result:** at 0.18 the veil was invisible on A1 and a mild flattening on B1; at
+0.28 it clearly read as fog on a lens rather than fog in the air, and cost 12-14 s
+per shot. At 0.12 the drift is perceptible between frames and the blacks stay put.
+
+**Decision:** keep it at 0.12 on the three shots that actually contain fog, and
+nowhere else. The honest version of this note needs image-to-video, which the
+build has no endpoint for; `haze` is the local substitute, not the fix.

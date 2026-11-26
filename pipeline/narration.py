@@ -83,7 +83,13 @@ def run(storyboard: dict, args, only) -> None:
 
     tts_dir = out_path("audio", "tts", ".keep").parent
     narration_dir = out_path("audio", "narration", ".keep").parent
-    timings = {}
+    # Measure the lines that already exist before speaking anything. `--only`
+    # re-records one line, but the film's layout still has to account for the
+    # other eight, or the timing file is rewritten as if they were silent and
+    # every shot snaps back to its storyboard length.
+    timings = {shot["id"]: wav_duration(narration_dir / f"{shot['id']}.wav")
+               for shot in storyboard["shots"]
+               if shot.get("narration") and (narration_dir / f"{shot['id']}.wav").exists()}
     pieces = []
     last_call = 0.0
 
@@ -95,20 +101,25 @@ def run(storyboard: dict, args, only) -> None:
             continue
         tts_target = tts_dir / f"{shot['id']}.wav"
         target = narration_dir / f"{shot['id']}.wav"
-        key = common.artifact_key("narration", shot["id"], script["text"], voice["voice_id"],
+        # `tts_text` is what the voice is asked to say; `text` is what the film
+        # means, and `subtitle` is what the audience reads. They differ only when
+        # a word needs help being pronounced: an extra comma buys a beat, and a
+        # respelling can be tried without touching the subtitle or the meaning.
+        spoken = script.get("tts_text") or script["text"]
+        key = common.artifact_key("narration", shot["id"], spoken, voice["voice_id"],
                                   voice["instruction"], model, mode)
 
         if common.is_fresh(tts_target, key) and not args.force:
             cached = True
         elif args.dry_run:
-            print(f"  {shot['id']}: would speak {len(script['text'].split())} words as {voice['voice_id']}"
+            print(f"  {shot['id']}: would speak {len(spoken.split())} words as {voice['voice_id']}"
                   f", then play at {speed:g}x")
             continue
         else:
             cached = False
             print(f"  {shot['id']}: speaking as {voice['voice_id']} ...")
             if mode == "mock":
-                seconds = mock_length(script["text"])
+                seconds = mock_length(spoken)
                 common.mock_tone(tts_target, seconds=seconds, freq=196.0, gain_db=-30)
                 cost = 0.0
             else:
@@ -120,7 +131,7 @@ def run(storyboard: dict, args, only) -> None:
                     time.sleep(wait)
                 last_call = time.monotonic()
                 raw, cost = providers.gemini_speech(
-                    text=script["text"], voice_id=voice["voice_id"],
+                    text=spoken, voice_id=voice["voice_id"],
                     instruction=voice["instruction"], model=model,
                 )
                 raw_path = tts_dir / f"{shot['id']}.raw"
