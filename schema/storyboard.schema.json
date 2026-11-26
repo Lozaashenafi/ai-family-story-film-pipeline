@@ -71,6 +71,11 @@
           "type": "object",
           "additionalProperties": { "type": "string" },
           "description": "Named colour description per scene, used in prompts and in the grade."
+        },
+        "grades": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Optional FFmpeg eq filter per scene key (a, b, c, d), applied to every clip in that scene. Grading is how a scene's mood is corrected without repainting it."
         }
       }
     },
@@ -115,7 +120,14 @@
             "type": "string",
             "description": "Plain-language style instruction, e.g. 'calm, warm, unhurried'."
           },
-          "model": { "type": "string" }
+          "model": { "type": "string" },
+          "speed": {
+            "type": "number",
+            "minimum": 0.8,
+            "maximum": 1.4,
+            "default": 1.0,
+            "description": "Tempo applied to the generated voice after synthesis (FFmpeg atempo). Sets the film's pace without spending another TTS call or letting speech drift over the 90 s ceiling."
+          }
         }
       }
     },
@@ -169,6 +181,10 @@
                 "description": "Scene description only. The style block and character descriptions are appended by the stage."
               },
               "seed": { "type": "integer" },
+              "negative": {
+                "type": "string",
+                "description": "Extra negative prompt for this shot only, appended to the style negative. For fixing one frame's defect without invalidating every other cached keyframe."
+              },
               "characters": {
                 "type": "array",
                 "items": { "type": "string" }

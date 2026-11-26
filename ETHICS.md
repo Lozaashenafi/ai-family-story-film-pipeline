@@ -80,9 +80,12 @@ shawl; leaving at night on foot; the highland road; arriving in Addis with nothi
 chose afterwards; the coffee ceremony she presided over until the end; the scar on her knuckles.
 
 Mine, invented for the film: every line of narration. The specific tear in A3, the abandoned shawl
-in B3 and the bus in B4 (she never described how she travelled), the exact time of day, the weather,
-the "it is your fate" line given to the elder in A4, and the granddaughter's presence in the final
-shot. The Amharic is mine; she spoke Amharic, but these are not her sentences.
+in B3, the exact time of day, the weather, the "it is your fate" line given to the elder in A4, and
+the granddaughter's presence in the final shot. The bus is invented twice over: it appears in B4 and
+the revised C1 now says it took her to Addis, though she never described how she travelled. The
+revised A4 also says the elders decided the marriage, which is the film's reading of the family's
+"arranged" rather than a detail anyone told me. The Amharic is mine; she spoke Amharic, but these
+are not her sentences.
 
 Not in the film at all: her name, her village, the year, the husband's family, and what happened to
 her in the first years in the city. Those belong to her children, not to a public video.

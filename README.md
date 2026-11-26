@@ -71,7 +71,7 @@ lines. A build therefore resumes from cache across days instead of failing.
 | stage | reads | writes | can it call a model |
 |---|---|---|---|
 | `pipeline/script.py` | storyboard | `outputs/plan.json`, `outputs/script.md` | no |
-| `pipeline/narration.py` | storyboard | per-shot WAVs, `radio_cut.wav`, `timing.json` | Gemini TTS |
+| `pipeline/narration.py` | storyboard | voice WAVs, re-timed WAVs, `radio_cut.wav`, `timing.json` | Gemini TTS |
 | `pipeline/keyframes.py` | storyboard, photo | 12 keyframes, 2 character sheets | FLUX.2 / Gemini image |
 | `pipeline/shots.py` | keyframes, timing | 12 clips | Wan-class i2v (optional) |
 | `pipeline/music.py` | storyboard, timing | 12 candidates, `score.wav` | ACE-Step (optional) |
@@ -81,6 +81,13 @@ Narration runs before images on purpose: the measured length of each Amharic
 line decides how long its shot is, inside the 90-second ceiling. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+The performance is cached at natural pace in `outputs/audio/tts/` and re-timed
+afterwards, so `voices.narrator.speed` changes the pace without another TTS call.
+Two other fields exist for revisions that should not cost a full rebuild:
+`style.grades` (an eq correction per scene, applied to every clip in it) and a
+per-shot `keyframe.negative` (fixes one frame's defect without invalidating the
+other eleven).
+
 ## Where things land
 
 ```
@@ -89,7 +96,7 @@ outputs/
   horizontal.mp4  the same film, derived widescreen
   subs/           burned-in ASS + film.en.srt sidecar
   plan.json       every prompt, seed and wrapped subtitle line
-  audio/          narration per shot, radio cut, score, final mix
+  audio/          tts/ (natural pace), narration/ (re-timed), radio cut, score, mix
   keyframes/      one still per shot
   clips/          one clip per shot
 runs.jsonl        one line per model call: stage, provider, model, seconds, cost
@@ -110,7 +117,7 @@ The pipeline refuses to run while `meta.consent.status` is `pending`.
 
 - [`DESIGN.md`](DESIGN.md) - why the film looks and sounds the way it does
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) - how the pipeline is put together
-- [`EXPERIMENTS.md`](EXPERIMENTS.md) - the thirteen decisions that were tested
+- [`EXPERIMENTS.md`](EXPERIMENTS.md) - the eighteen decisions that were tested
 - [`FAILURES.md`](FAILURES.md) - what broke, and what I changed because of it
 - [`COSTS.md`](COSTS.md) - measured and projected spend
 - [`ETHICS.md`](ETHICS.md) - consent, likeness, disclosure, withdrawal

@@ -6,7 +6,10 @@
     "language": "am",
     "subtitle_language": "en",
     "fps": 24,
-    "aspect_ratios": ["9:16", "16:9"],
+    "aspect_ratios": [
+      "9:16",
+      "16:9"
+    ],
     "audience": "My family first, on a phone: my mother's generation, who knew her, and my cousins born in Addis and abroad who only know her name. Then the cohort and anyone who has a grandmother they wish they had asked more questions about.",
     "intent": "They should feel that one frightened, barefoot decision is the reason their own life exists where it does, and they should want to go and ask an elder for the story they have not asked for yet.",
     "consent": {
@@ -14,7 +17,6 @@
       "details": "Subject is my late grandmother. Her living children (including my parent) have been asked and have agreed, and the record is in ETHICS.md. Consent covers (a) a stylised painted depiction informed by the one surviving family photograph, (b) the invented first-person words placed in her mouth, and (c) publication to the course and to social platforms with an AI label. Her photograph is a likeness reference only; it is never shown on screen and she is not named in the film or its public posts."
     }
   },
-
   "style": {
     "block": "hand-painted gouache and ink illustration on coarse paper, visible brushwork and paper grain, painterly realism, Ethiopian highland palette, muted and slightly desaturated, soft natural light, shallow depth of field, fine film grain, no text, no lettering, no watermark",
     "negative": "photorealistic photograph, 3d render, cgi, plastic skin, extra fingers, deformed hands, text, letters, watermark, logo, oversaturated, neon, modern technology",
@@ -23,9 +25,13 @@
       "scene_b": "slate-blue pre-dawn fog, wet grey stone, pale ochre ridge",
       "scene_c": "warm gold afternoon, terracotta, cobalt sky",
       "scene_d": "honey lamplight, deep green, white cotton, soft shadow"
+    },
+    "grades": {
+      "a": "eq=saturation=0.95:contrast=1.02",
+      "b": "eq=saturation=0.80:contrast=1.08:brightness=-0.02",
+      "c": "eq=saturation=1.0:contrast=1.03"
     }
   },
-
   "characters": [
     {
       "id": "girl",
@@ -42,14 +48,13 @@
       "seed": 2202
     }
   ],
-
   "voices": {
     "narrator": {
       "voice_id": "Kore",
-      "instruction": "an older woman remembering, calm, warm, unhurried, speaking Amharic softly as if to one person close by; let the pauses breathe, never theatrical"
+      "instruction": "an older woman remembering, calm, warm, unhurried, speaking Amharic softly as if to one person close by; let the pauses breathe, never theatrical",
+      "speed": 1.1
     }
   },
-
   "shots": [
     {
       "id": "A1",
@@ -82,11 +87,17 @@
       "shot_size": "medium",
       "camera": "eye level, slow push",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.0, "zoom_to": 1.12, "pan": "in" },
+      "kenburns": {
+        "zoom_from": 1.0,
+        "zoom_to": 1.12,
+        "pan": "in"
+      },
       "keyframe": {
         "prompt": "interior of a smoky highland hut at night, a girl of thirteen sits in a corner against the wall, knees drawn up, both hennaed hands folded quietly together on one knee, fingers interlocked, exactly two hands, faded red wedding shawl around her shoulders, headscarf slipping, eyes lowered, one kerosene lamp on the floor throwing amber light and long shadows, cold indigo dark around her",
         "seed": 31014,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -103,16 +114,22 @@
       "shot_size": "close",
       "camera": "eye level, locked",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.06, "zoom_to": 1.0, "pan": "out" },
+      "kenburns": {
+        "zoom_from": 1.24,
+        "zoom_to": 1.16,
+        "pan": "up"
+      },
       "keyframe": {
         "prompt": "close-up of a thirteen-year-old Ethiopian girl's face lit only by a kerosene lamp, one tear catching the light on her cheek, wet eyelashes, hennaed fingers at the edge of the frame, faded red shawl at her throat, deep indigo shadow behind her",
         "seed": 31003,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
-        "text": "እጆቼ በእንሶስላ ሲቀሉ፣ ልቤ ግን በፍርሃት ታስሮ ነበር።",
-        "subtitle": "My hands were stained with henna, but my heart was tied in fear."
+        "text": "በእጆቼ ላይ እንሶስላ ነበር፤ ልቤ ግን በፍርሃት ታስሮ ነበር።",
+        "subtitle": "There was henna on my hands, but my heart was tied in fear."
       },
       "ambience": "breath, lamp hiss, drum far away"
     },
@@ -124,16 +141,22 @@
       "shot_size": "insert",
       "camera": "low angle on the wall, static",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.0, "zoom_to": 1.08, "pan": "right" },
+      "kenburns": {
+        "zoom_from": 1.0,
+        "zoom_to": 1.08,
+        "pan": "right"
+      },
       "keyframe": {
         "prompt": "interior hut wall at night, the huge distorted shadow of an older man's head and shoulders thrown across the mud wall by a kerosene lamp, a heavy hand reaching toward a folded red wedding shawl on a stool, the girl's small shadow crouched at the edge of the frame, warm amber against cold dark",
         "seed": 31004,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
-        "text": "ያልመረጥኩትን ሕይወት፣ ያላወቅኩትን ባል... ‹ዕድልሽ ነው› ብለው ሊያሸክሙኝ ድግሱ ደምቋል።",
-        "subtitle": "They had lit the wedding fires to load me with a life I did not choose, a husband I did not know — \"it is your fate,\" they said."
+        "text": "ሽማግሌዎቹ ሰርጌን ወሰኑ፤ ያላወቅኩትን ሰው ሰጡኝ። ‹ዕድልሽ ነው› አሉኝ።",
+        "subtitle": "The elders decided my marriage; they gave me a man I did not know. \"It is your fate,\" they told me."
       },
       "ambience": "approaching footsteps, drum, ululation rising then cut"
     },
@@ -152,9 +175,12 @@
         "pan": "right"
       },
       "keyframe": {
-        "prompt": "pre-dawn highland path, a girl of thirteen walking fast barefoot between wet stone walls, heavy fog swallowing the path behind her, her red shawl clutched to her chest, her white dress soaked at the hem, cold slate-blue light, mountains barely visible above the mist",
+        "prompt": "pre-dawn highland path, a girl of thirteen walking fast barefoot between wet stone walls, thin and grey with exhaustion, heavy fog swallowing the path behind her, her red shawl clutched to her chest, her white dress soaked at the hem, cold slate-blue light, bare wrists with no watch and no bracelet, mountains barely visible above the mist",
+        "negative": "wristwatch, watch, bracelet, bangle, ring, jewellery, extra fingers, deformed hands, extra toes, modern clothing",
         "seed": 31005,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -171,11 +197,18 @@
       "shot_size": "insert",
       "camera": "low, close on the ground",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.0, "zoom_to": 1.15, "pan": "in" },
+      "kenburns": {
+        "zoom_from": 1.0,
+        "zoom_to": 1.15,
+        "pan": "in"
+      },
       "keyframe": {
-        "prompt": "extreme close-up of a girl's bare feet on a wet stone mountain path, a thorn scratch and a smear of blood on one heel, dew beading on grass at the frame edge, mud on the hem of a white cotton dress, cold grey-blue dawn light",
-        "seed": 31006,
-        "characters": ["girl"]
+        "prompt": "extreme close-up of a girl's two bare feet on a wet stone mountain path, five toes on each foot, a thorn scratch and a smear of blood on one heel, dew beading on grass at the frame edge, mud on the hem of a white cotton dress, cold grey-blue dawn light, both hands out of frame",
+        "negative": "six toes, extra toes, deformed feet, hand, fingers, bracelet, wristwatch, jewellery",
+        "seed": 31016,
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -192,7 +225,11 @@
       "shot_size": "close",
       "camera": "high angle, tilt down",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.1, "zoom_to": 1.0, "pan": "out" },
+      "kenburns": {
+        "zoom_from": 1.1,
+        "zoom_to": 1.0,
+        "pan": "out"
+      },
       "keyframe": {
         "prompt": "a faded red hand-woven wedding shawl lying abandoned on a wet stone path, one corner lifted by the wind, tiny white tibeb embroidery catching the first grey light, fog drifting over it, no people, cold slate-blue dawn",
         "seed": 31007,
@@ -223,7 +260,9 @@
       "keyframe": {
         "prompt": "vast Ethiopian highland valley at first light, a tiny girl in a white dress standing at the edge of a switchback road, an old bus far below with a thin plume of diesel smoke, ridges layered in blue fog, pale ochre grass, cold and enormous and quiet",
         "seed": 31008,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -240,16 +279,23 @@
       "shot_size": "wide",
       "camera": "eye level, slow push",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.0, "zoom_to": 1.1, "pan": "in" },
+      "kenburns": {
+        "zoom_from": 1.0,
+        "zoom_to": 1.1,
+        "pan": "in"
+      },
       "keyframe": {
-        "prompt": "a girl of thirteen in a rumpled white cotton dress standing still at the edge of a busy Addis Ababa street in warm late-afternoon gold light, tall buildings and crowds of people passing in soft blurred motion around her, minibus taxis, dust in the sunbeams, her bare feet on hot asphalt, awe on her face, warm gold and terracotta",
+        "prompt": "a girl of thirteen, tall and thin, in a rumpled white cotton dress standing still in the middle of a busy Addis Ababa street in warm late-afternoon gold light, tall buildings and crowds of people passing in soft blurred motion around her, minibus taxis, dust in the sunbeams, her bare feet on hot asphalt, dazed and exhausted, clutching the shawl, people walking past without looking at her, warm gold and terracotta",
+        "negative": "wristwatch, watch, bracelet, jewellery, toddler, small child",
         "seed": 31009,
-        "characters": ["girl"]
+        "characters": [
+          "girl"
+        ]
       },
       "narration": {
         "voice": "narrator",
-        "text": "አዲስ አበባ ስገባ በኪሴ ምንም አልነበረኝም፤",
-        "subtitle": "When I came into Addis Ababa I had nothing in my pocket,"
+        "text": "አውቶቡሱ አዲስ አበባ ወሰደኝ፤ በኪሴ ምንም አልነበረኝም፤",
+        "subtitle": "The bus took me to Addis Ababa; I had nothing in my pocket,"
       },
       "ambience": "city traffic, many voices, a horn, a street vendor calling"
     },
@@ -261,11 +307,19 @@
       "shot_size": "medium_close",
       "camera": "eye level, gentle push",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.0, "zoom_to": 1.08, "pan": "in" },
+      "kenburns": {
+        "zoom_from": 1.0,
+        "zoom_to": 1.08,
+        "pan": "in"
+      },
       "keyframe": {
-        "prompt": "medium close-up of a thirteen-year-old Ethiopian girl in a city street, the first real smile breaking across her face, a tall glass building and blurred passing figures behind her, warm gold afternoon light on her cheek, dust and pollen in the air, white cotton dress with a tibeb border",
-        "seed": 31010,
-        "characters": ["girl"]
+        "prompt": "close portrait of a thirteen-year-old Ethiopian girl in a city street, head and shoulders, a tall slim adolescent on the edge of adulthood, the first real smile breaking across her face, a tall glass building and blurred passing figures behind her, warm gold afternoon light on her cheek, dust and pollen in the air, white cotton dress with a tibeb border at her shoulder, the picture reaches every edge of the frame",
+        "negative": "paper border, white frame, deckled edge, vignette border, small child, eight years old, toddler, chibi, oversized head, cartoon proportions, wristwatch, bracelet, bangle, jewellery, knit cardigan",
+        "seed": 31022,
+        "characters": [
+          "girl"
+        ],
+        "use_reference": false
       },
       "narration": {
         "voice": "narrator",
@@ -291,7 +345,9 @@
       "keyframe": {
         "prompt": "an elderly Ethiopian woman of about seventy sitting in a warm room at a coffee ceremony, white netela over silver-threaded hair, dark green dress with a tibeb border, steam rising from a black clay coffee pot, small cups on a tray, honey lamplight, her hands resting in her lap, faded henna on her palms, calm and proud",
         "seed": 31011,
-        "characters": ["grandmother"]
+        "characters": [
+          "grandmother"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -308,11 +364,17 @@
       "shot_size": "close",
       "camera": "pull back slowly to medium",
       "mode": "kenburns",
-      "kenburns": { "zoom_from": 1.15, "zoom_to": 1.0, "pan": "out" },
+      "kenburns": {
+        "zoom_from": 1.15,
+        "zoom_to": 1.0,
+        "pan": "out"
+      },
       "keyframe": {
         "prompt": "close-up of two hands resting together in a lap, an old woman's hand with faded henna and a pale scar across the knuckles held by a younger hand with a thin silver ring, white netela and dark green cloth at the frame edge, honey lamplight, steam drifting through the light",
         "seed": 31012,
-        "characters": ["grandmother"]
+        "characters": [
+          "grandmother"
+        ]
       },
       "narration": {
         "voice": "narrator",
@@ -322,7 +384,6 @@
       "ambience": "room tone, a single cup set down, then silence"
     }
   ],
-
   "music": {
     "cues": [
       {
@@ -381,7 +442,6 @@
       "true_peak_db": -1
     }
   },
-
   "end_cards": [
     {
       "id": "dedication",
@@ -404,9 +464,18 @@
       ]
     }
   ],
-
   "exports": [
-    { "name": "vertical", "aspect": "9:16", "width": 1080, "height": 1920 },
-    { "name": "horizontal", "aspect": "16:9", "width": 1920, "height": 1080 }
+    {
+      "name": "vertical",
+      "aspect": "9:16",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "name": "horizontal",
+      "aspect": "16:9",
+      "width": 1920,
+      "height": 1080
+    }
   ]
 }

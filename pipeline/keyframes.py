@@ -95,8 +95,14 @@ def run(storyboard: dict, args, only) -> None:
                 reference = reference_for(storyboard, character_id, shot_id=shot["id"])
                 if reference:
                     break
+        # A shot may add its own negative for a defect that only appears in that
+        # frame (a watch, six toes, a paper border). It is appended to the style
+        # negative rather than replacing it, and it is in the cache key so fixing
+        # one shot never invalidates the other eleven.
+        negative = shot["keyframe"].get("negative")
+        full_negative = storyboard["style"]["negative"] + (", " + negative if negative else "")
         key = common.artifact_key(
-            "keyframe", shot["id"], prompt, storyboard["style"]["negative"], shot["keyframe"].get("seed"),
+            "keyframe", shot["id"], prompt, full_negative, shot["keyframe"].get("seed"),
             str(reference) if reference else None,
             common.sha256_file(reference) if reference else None, mode,
         )
@@ -111,12 +117,13 @@ def run(storyboard: dict, args, only) -> None:
         print(f"  {shot['id']}: painting{' from the family photograph' if reference else ''} ...")
         generate(storyboard, prompt=prompt, target=target, seed=shot["keyframe"].get("seed", 1),
                  reference=reference, shot_id=shot["id"], stage="keyframes", mode=mode,
-                 scene=shot["scene"])
+                 scene=shot["scene"], negative=negative)
         common.mark_fresh(target, key)
 
 
 def generate(storyboard: dict, *, prompt: str, target: Path, seed: int, reference: Path | None,
-             shot_id: str, stage: str, mode: str, scene: str = "A") -> None:
+             shot_id: str, stage: str, mode: str, scene: str = "A",
+             negative: str | None = None) -> None:
     """Generate one image, choosing the provider by what the request needs.
 
     FLUX.2 on Cloudflare handles both cases and is the default: it accepts
@@ -124,7 +131,7 @@ def generate(storyboard: dict, *, prompt: str, target: Path, seed: int, referenc
     of the two available on a free tier. Gemini's image model is the fallback
     for a key that has no Cloudflare account, even though its free quota is 0.
     """
-    negative = storyboard["style"]["negative"]
+    negative = storyboard["style"]["negative"] + (", " + negative if negative else "")
     if mode == "mock":
         common.mock_image(target, shot_id=shot_id, scene=scene, label=prompt.split(",")[0],
                           width=FRAME[0], height=FRAME[1], seed=seed)

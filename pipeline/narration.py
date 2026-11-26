@@ -7,9 +7,14 @@ The narration is generated first, before any image, because the measured speech
 decides how long each shot has to be. A shot's final duration is the larger of
 the storyboard's intent and what the line actually needs, plus breathing room.
 
+Tempo is a separate, cached pass: the model's voice is kept in audio/tts/ and
+`voices.<name>.speed` re-times it with atempo. Changing the pace therefore costs
+no TTS calls and cannot change the performance, only how fast it plays.
+
 Run:  python -m pipeline.narration
-Writes: outputs/audio/narration/<shot>.wav, outputs/audio/radio_cut.wav,
-        outputs/audio/timing.json
+Writes: outputs/audio/tts/<shot>.wav (natural pace),
+        outputs/audio/narration/<shot>.wav (after speed),
+        outputs/audio/radio_cut.wav, outputs/audio/timing.json
 """
 
 from __future__ import annotations
@@ -24,11 +29,33 @@ from .common import out_path, rel, stage_cli, wav_duration
 SAMPLE_RATE = 24000
 LEAD_IN = 0.5   # silence before the first word of a line
 # Kore speaks Amharic at 1.23 words/s, not the 2.2 the storyboard was timed for,
-# so 83 words need 67 s of a 82 s picture budget. A 0.8 s tail then pushed the
-# film to 91.4 s; 0.6 s keeps a beat after each line and still lands under 90 s.
+# so 83 words needed 67 s of an 82 s picture budget. The first cut paid for that
+# by trimming shots; testers heard the result as slow speech, so the voice is
+# now re-timed by `speed` (1.10 in this cut) and the shots keep their lengths.
 TAIL = 0.6
 CEILING = 90.0  # seconds; the brief's hard limit
 PACE_S = 6.0    # seconds between real TTS requests; the preview model throttles bursts
+
+
+def post_process(src, dst, speed: float) -> None:
+    """Set the film's pace without a second TTS call.
+
+    Two changes, in this order, because testers described the first cut as slow
+    and the measurement agrees: the model sometimes leaves 1-2 s of dead air
+    inside a line and up to 5 s at the end. silenceremove cuts any pause longer
+    than 0.55 s back to a 0.30 s beat, so the words keep their shape and the
+    gaps stop dragging. atempo then trims the remaining 10%: duration changes,
+    pitch and timbre do not, so it is still the same narrator.
+
+    This is a post pass on purpose - the performance is paid for once, pace is a
+    number in the contract, and re-timing costs one FFmpeg call.
+    """
+    common.ff(
+        "-i", src,
+        "-af", "silenceremove=stop_periods=-1:stop_duration=0.55:stop_threshold=-38dB:stop_silence=0.30,"
+               f"atempo={speed:.3f}",
+        "-ac", "1", "-ar", SAMPLE_RATE, "-c:a", "pcm_s16le", dst,
+    )
 
 
 def normalise(src, dst) -> None:
@@ -51,8 +78,10 @@ def run(storyboard: dict, args, only) -> None:
     voice_name = "narrator"
     voice = storyboard["voices"][voice_name]
     model = voice.get("model") or "gemini-2.5-flash-preview-tts"
+    speed = float(voice.get("speed", 1.0))
     mode = common.provider_mode()
 
+    tts_dir = out_path("audio", "tts", ".keep").parent
     narration_dir = out_path("audio", "narration", ".keep").parent
     timings = {}
     pieces = []
@@ -64,23 +93,23 @@ def run(storyboard: dict, args, only) -> None:
             continue
         if only and shot["id"] not in only:
             continue
+        tts_target = tts_dir / f"{shot['id']}.wav"
         target = narration_dir / f"{shot['id']}.wav"
         key = common.artifact_key("narration", shot["id"], script["text"], voice["voice_id"],
                                   voice["instruction"], model, mode)
 
-        if common.is_fresh(target, key) and not args.force:
-            duration = wav_duration(target)
-            common.log_run(stage="narration", operation="tts", provider=mode, model=model,
-                           status="ok", cached=True, shot_id=shot["id"], seconds=duration)
-            print(f"  {shot['id']}: cached ({duration:.1f}s)")
+        if common.is_fresh(tts_target, key) and not args.force:
+            cached = True
         elif args.dry_run:
-            print(f"  {shot['id']}: would speak {len(script['text'].split())} words as {voice['voice_id']}")
+            print(f"  {shot['id']}: would speak {len(script['text'].split())} words as {voice['voice_id']}"
+                  f", then play at {speed:g}x")
             continue
         else:
+            cached = False
             print(f"  {shot['id']}: speaking as {voice['voice_id']} ...")
             if mode == "mock":
                 seconds = mock_length(script["text"])
-                common.mock_tone(target, seconds=seconds, freq=196.0, gain_db=-30)
+                common.mock_tone(tts_target, seconds=seconds, freq=196.0, gain_db=-30)
                 cost = 0.0
             else:
                 # The free tier caps TTS at ten requests a day per model, and
@@ -94,17 +123,32 @@ def run(storyboard: dict, args, only) -> None:
                     text=script["text"], voice_id=voice["voice_id"],
                     instruction=voice["instruction"], model=model,
                 )
-                raw_path = narration_dir / f"{shot['id']}.raw"
+                raw_path = tts_dir / f"{shot['id']}.raw"
                 raw_path.write_bytes(raw)
                 try:
-                    normalise(raw_path, target)
+                    normalise(raw_path, tts_target)
                 finally:
                     raw_path.unlink(missing_ok=True)
-            duration = wav_duration(target)
-            common.mark_fresh(target, key)
-            common.log_run(stage="narration", operation="tts", provider=mode, model=model,
-                           status="ok", cached=False, shot_id=shot["id"], seconds=duration,
-                           voice=voice["voice_id"], cost_usd_estimate=round(cost, 4))
+            common.mark_fresh(tts_target, key)
+
+        if args.dry_run:
+            print(f"  {shot['id']}: voice cached, would play at {speed:g}x")
+            continue
+
+        # Tempo is keyed on the voice file, not on the text: changing `speed`
+        # re-times cached audio in a second and leaves the TTS cache untouched.
+        post_key = common.artifact_key("narration-post", shot["id"],
+                                       common.sha256_file(tts_target), speed, mode)
+        if not (common.is_fresh(target, post_key) and not args.force):
+            post_process(tts_target, target, speed)
+            common.mark_fresh(target, post_key)
+
+        duration = wav_duration(target)
+        common.log_run(stage="narration", operation="tts", provider=mode, model=model,
+                       status="ok", cached=cached, shot_id=shot["id"], seconds=duration,
+                       voice=voice["voice_id"], speed=speed,
+                       cost_usd_estimate=round(cost, 4) if not cached else None)
+        print(f"  {shot['id']}: {'cached' if cached else 'new'}, {duration:.1f}s at {speed:g}x")
 
         if not args.dry_run:
             timings[shot["id"]] = duration

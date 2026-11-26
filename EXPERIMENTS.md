@@ -281,3 +281,66 @@ corner and draws two hands. Repainting the girl's sheet as a seated gouache
 portrait would fix this class of error properly, but it invalidates nine
 keyframes and their clips, so it is recorded as the next revision instead of
 being done blind the night before the deadline.
+
+## 16. Does a faster narrator need a new voice take?
+
+**Hypothesis:** the fix for "the narration is slow" is to regenerate the lines
+with a brisker style instruction, since the model decides the pace.
+
+**Test:** first measured where the time actually goes. `silencedetect` on the
+eleven voice files found 1.75 s of dead air inside the new A4 line and 4.7 s
+after it; the other lines had similar, smaller tails. Then compared three ways to
+fix it: re-prompt the TTS (11 new calls, new performance, new risk), apply
+`atempo` to the cached audio (one FFmpeg pass, rhythm preserved, 10 TTS calls
+saved), or both.
+
+**Result:** `atempo=1.10` alone took 67.1 s of speech to 61.0 s, and compressing
+pauses longer than 0.55 s took it to 59.7 s at the same tempo. Pitch and formants
+are untouched - `atempo` is a WSOLA time-stretch, not a resample - so it is still
+the same take, just tighter. Re-prompting would also have cost a day of TTS quota
+and changed eight lines that two testers had no complaint about.
+
+**Decision:** tempo and pause compression are a post pass, keyed on the voice
+file and the `speed` field, so the performance is paid for once. Changing pace
+again is a one-line contract edit and one second of CPU. Three lines were
+re-spoken anyway, because their words changed (A3, A4, C1); the other eight were
+not touched.
+
+## 17. How quiet is the score, really?
+
+**Hypothesis:** the music was present from frame one, so the tester who thought
+his audio was broken must have been mistaken.
+
+**Test:** `volumedetect` on the first second of `score.wav`, and again on the
+first four seconds. Then the same after normalising the assembled bed.
+
+**Result:** -47.7 dB mean in the first second, -42.8 dB over the first four. The
+bed was not missing, it was buried: three sines at -6 dB, faded in over 1.2 s,
+never normalised, then ducked. After a whole-bed two-pass `loudnorm` to -27 LUFS
+and a 0.15 s fade-in, the first second measures -26.7 dB and the master still
+sits at -13.75 LUFS.
+
+**Decision:** normalise the bed as a whole, not each cue, because the cue-to-cue
+arc (C minor held, D minor urgent, F major warm, F major thinning) is the score.
+Normalising per cue would flatten it to four equally loud pieces.
+
+## 18. Can one negative prompt fix one frame?
+
+**Hypothesis:** the global style negative is too blunt for defects that appear
+in a single frame, and per-shot negatives can repair them without a full repaint.
+
+**Test:** added `keyframe.negative` to the contract, appended it to the style
+negative, and put it in the keyframe cache key. Re-painted B1 (watch, bracelets),
+B2 (toes, hands, bracelet), C2 (paper border, child proportions) and A3 (fingers)
+with shot-specific negatives.
+
+**Result:** B1's watch and both bracelets disappeared on the first try; B2's six
+toes became five. C2's paper border survived three takes and only went away when
+the character reference was dropped - the border was coming from the reference
+sheet's "print" look, not from the prompt. A3's hand survived the negative as
+well, and the quota ran out before another seed could be tried.
+
+**Decision:** per-shot negatives stay - they are cheap, they are in the cache
+key, and they fixed two of four defects outright. The two that failed are
+evidence that at 4B the image reference outranks negative text, which is the same
+lesson as experiment 15 from the other direction.

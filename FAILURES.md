@@ -189,3 +189,104 @@ chosen one is reproducible with `make keyframes --force`.
 **Lesson:** inspect a still at the size the audience sees it, and treat a
 reference sheet as a composition instruction as well as a likeness one. It
 cost about $0.07 to learn that, roughly 2% of the project's image spend.
+
+## 13. A watch, six toes, and a girl who aged backwards
+
+**Symptom:** three testers, three different frames. At 00:28 the girl walking in
+fog wore a modern wristwatch and two bracelets; B2's feet had six toes on one
+foot; C2 returned a six- or seven-year-old with a white paper border around the
+picture, an hour after C1 had painted her at thirteen.
+
+**Cause:** the style negative already said "modern technology" and "extra
+fingers", and neither reached these frames. More importantly, the girl's
+reference sheet is still the standing, round-faced child the first build used,
+so any prompt that asks for a close or young-looking figure snaps back to that
+child regardless of the words "thirteen-year-old" in the text. The watch was a
+model habit: a bare wrist is not described unless it is described.
+
+**Fix:** per-shot negatives in the contract (`keyframe.negative`), appended to the
+style negative and included in the cache key, so one bad frame is repaired
+without invalidating the other eleven. B1 was re-painted with "bare wrists with
+no watch and no bracelet"; B2 with "five toes on each foot, both hands out of
+frame"; C2 with "no paper border" and, after two more seeds, without the
+reference sheet at all. C2's seed 31022 is the first take that was both a
+thirteen-year-old and borderless.
+
+**Result:** watch and bracelets gone; five toes per foot; C2 is a tall,
+long-limbed girl with no frame around her. A3's hand could not be re-painted:
+the Cloudflare account hit its 10,000-neuron daily allowance on the last attempt
+(`HTTP 429`, code 4006), so the shot was re-framed instead - the Ken Burns now
+starts at 1.24x and drifts up, which turns the extra fingers into a sliver at the
+corner. B2's final take still has her hands and a knitted red wrap at the top
+edge. Both are recorded in `DESIGN.md` as known defects, not as fixed.
+
+**Lesson:** at this model size the reference sheet beats the prompt for age and
+pose, so the sheet is the thing to redo; and a daily free allowance can end a
+repair mid-sweep, which is why the fixes that needed no model call (crop,
+grade, re-time) are worth planning for.
+
+## 14. The opening second was silent
+
+**Symptom:** a tester thought his phone's audio had broken before the first line.
+Measured, he was nearly right: the score's first second averaged -47.7 dB.
+
+**Cause:** two small decisions compounding. `synth_cue` mixed three sines at
+`gain_db: -6` and then `afade=t=in:d=1.2`, and the bed was never normalised
+before the mix, so the score sat roughly 25 dB under the narration and its first
+1.2 s were a ramp from nothing. The ducking then held it down further.
+
+**Fix:** the assembled bed is normalised as a whole to -27 LUFS after the cues
+are placed (two-pass `loudnorm`, linear), the first cue fades in over 0.15 s
+instead of 1.2 s, and the first cue's gain rose from -6 to -3 dB. Normalising the
+bed rather than each cue keeps the intended arc - cold, urgent, warm, thinning.
+
+**Result:** the opening second measures -26.7 dB mean instead of -47.7, and the
+ducked master still lands at -13.75 LUFS / -1.00 dBTP.
+
+**Lesson:** "there is music" is a measurable claim. Check the level where the
+audience starts listening, not the level of the project as a whole.
+
+## 15. Slow narration was mostly dead air
+
+**Symptom:** two testers independently said the narration was slow. It measured
+1.24 words per second, but the words themselves were not the problem.
+
+**Cause:** `silencedetect` on the new A4 take found a 1.75 s pause inside the
+line and 4.7 s of near-silence after it. The existing `normalise()` trimmed only
+silence below -42 dB, and the model's room tone sits above that, so most of the
+tail survived. The first cut paid for this with picture: A1 was trimmed from 6 s
+to 2.8 s and C1 from 8 s to 4.7 s to stay under 90 s.
+
+**Fix:** a tempo pass after the TTS cache - any pause longer than 0.55 s is cut
+back to 0.30 s, then `atempo=1.10`. Pitch and timbre are untouched, the paid
+performance is kept, and `voices.narrator.speed` re-times it without a new call.
+Speech fell from 67.1 s to 59.7 s, and the shots got their designed lengths back.
+
+**Result:** the film is still exactly 90.0 s, but A1 now holds 6.0 s instead of
+2.8 s, and the slowest shot in the film is A4 at 7.8 s rather than an artefact of
+a 4.7 s tail.
+
+**Lesson:** when speech feels slow, measure the gaps before changing the rate.
+Half of this fix cost nothing and the other half cost one number.
+
+## 16. A one-line grade edit broke the whole stage
+
+**Symptom:** `make shots` died on A1 with
+`Unable to choose an output format for 'noise=...'` - FFmpeg was treating the
+tail of the filter chain as an output filename.
+
+**Cause:** the filter chain was written as adjacent string literals so Python
+would concatenate them into one `-vf` argument. Inserting
+`f"{grade}," if grade else ""` as a new element of the call split the chain into
+two positional arguments, so `-vf` received only the first half.
+
+**Fix:** the chain is built as one variable, appending the grade and then the
+grain, and passed as a single argument. The stage now names the variable `chain`
+so the next edit has somewhere obvious to go.
+
+**Result:** all twelve clips re-rendered in 121 s with the scene grades applied.
+
+**Lesson:** `-vf` takes exactly one argument. Adjacent literals are a trap the
+moment a conditional enters the list - and `assemble` will happily build from
+stale clips if the durations are not checked, which is how the broken run still
+produced a 90 s file before the fix.

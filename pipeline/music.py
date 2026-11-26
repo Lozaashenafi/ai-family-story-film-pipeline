@@ -17,13 +17,16 @@ Writes: outputs/audio/music/<cue>_candidate_<n>.wav, outputs/audio/score.wav
 from __future__ import annotations
 
 import json
+import re
 import wave
 
 from . import common, providers
 from .common import out_path, rel, stage_cli
 
 SAMPLE_RATE = 24000
-FADE = 1.2  # seconds of fade at each cue boundary
+FADE_OUT = 1.2  # seconds of fade at each cue boundary
+FADE_IN = 0.15  # the film opens on sound, not on silence: see normalise_bed()
+BED_LUFS = -27.0  # score level before it is ducked under the voice
 
 ROOT_NOTE = {
     "c": 130.81, "c#": 138.59, "db": 138.59, "d": 146.83, "d#": 155.56, "eb": 155.56,
@@ -48,7 +51,8 @@ def cue_windows(storyboard: dict, timing: dict) -> list[dict]:
     return windows
 
 
-def synth_cue(target, *, duration: float, bpm: int, key: str, gain_db: float) -> None:
+def synth_cue(target, *, duration: float, bpm: int, key: str, gain_db: float,
+              fade_in: float = FADE_IN) -> None:
     """A slow pentatonic drone with a pulse, shaped to the cue's tempo.
 
     Deliberately plain: it exists so the film has something under the voice in
@@ -68,9 +72,42 @@ def synth_cue(target, *, duration: float, bpm: int, key: str, gain_db: float) ->
         f"tremolo=f={1 / beat:.3f}:d=0.35,"
         "lowpass=f=1600,aecho=0.7:0.5:180|360:0.35|0.18,"
         f"volume={gain_db}dB,"
-        f"afade=t=in:d={FADE},afade=t=out:st={max(0.0, duration - FADE):.3f}:d={FADE}[bed]",
+        f"afade=t=in:d={fade_in},afade=t=out:st={max(0.0, duration - FADE_OUT):.3f}:d={FADE_OUT}[bed]",
         "-map", "[bed]", "-ac", "1", "-ar", SAMPLE_RATE, "-c:a", "pcm_s16le", target,
     )
+
+
+def normalise_bed(path) -> None:
+    """Raise the assembled bed to a level that survives a phone speaker.
+
+    The first cut measured -47 dB in its opening second, because the bed was
+    synthesised quietly and then faded in over 1.2 s. One tester thought his
+    device audio was broken. Normalising the finished bed - rather than each
+    cue - keeps the cue-to-cue arc (cold, urgent, warm, thinning) intact, and
+    the assembly stage still ducks it under every line.
+    """
+    result = common.run([
+        common.ffmpeg(), "-hide_banner", "-nostats", "-i", str(path),
+        "-af", f"loudnorm=I={BED_LUFS}:TP=-6:LRA=9:print_format=json", "-f", "null", "-",
+    ])
+    match = re.search(r"\{[^{}]*\"input_i\"[^{}]*\}", result.stderr, re.S)
+    if not match:
+        return
+    try:
+        stats = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return
+    normalised = path.with_name(path.stem + ".norm.wav")
+    common.ff(
+        "-i", path, "-af",
+        f"loudnorm=I={BED_LUFS}:TP=-6:LRA=9:measured_I={stats['input_i']}"
+        f":measured_TP={stats['input_tp']}:measured_LRA={stats['input_lra']}"
+        f":measured_thresh={stats['input_thresh']}:offset={stats['target_offset']}"
+        f":linear=true,aresample={SAMPLE_RATE}",
+        "-ac", "1", "-c:a", "pcm_s16le", normalised,
+    )
+    normalised.replace(path)
+    print(f"  score: normalised to {BED_LUFS:.0f} LUFS for the mix")
 
 
 def run(storyboard: dict, args, only) -> None:
@@ -113,8 +150,8 @@ def run(storyboard: dict, args, only) -> None:
                     )
                     staged = music_dir / f"{cue['id']}_candidate_{index}.raw"
                     staged.write_bytes(raw)
-                    common.ff("-i", staged, "-af", f"afade=t=in:d={FADE},"
-                                                   f"afade=t=out:st={max(0.0, window['duration'] - FADE):.3f}:d={FADE}",
+                    common.ff("-i", staged, "-af", f"afade=t=in:d={FADE_IN},"
+                                                   f"afade=t=out:st={max(0.0, window['duration'] - FADE_OUT):.3f}:d={FADE_OUT}",
                               "-t", window["duration"], "-ac", "1", "-ar", SAMPLE_RATE,
                               "-c:a", "pcm_s16le", target)
                     staged.unlink(missing_ok=True)
@@ -157,6 +194,8 @@ def run(storyboard: dict, args, only) -> None:
         handle.setsampwidth(2)
         handle.setframerate(SAMPLE_RATE)
         handle.writeframes(bytes(buffer))
+
+    normalise_bed(score)
 
     if not choices_path.exists():
         choices_path.write_text(json.dumps(

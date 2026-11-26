@@ -26,20 +26,26 @@ at CRF 18 while the horizontal derivation is 26 MB.
 
 | stage | calls | model | billed | estimate in `runs.jsonl` |
 |---|---|---|---|---|
-| narration | 11 of 11 | `gemini-2.5-flash-preview-tts` | free tier, 10 requests/day | $0.008 |
+| narration | 11 + 3 re-spoken | `gemini-2.5-flash-preview-tts` | free tier, 10 requests/day | $0.010 |
 | character sheets | 2 | FLUX.2 klein 4B / flux-1-schnell | free tier (neurons) | $0.004 |
-| keyframes | 12 + 12 revision frames | FLUX.2 klein 4B (2 on 9B) | free tier (neurons) | $0.115 |
+| keyframes | 12 + 12 revision + 10 feedback frames | FLUX.2 klein 4B (2 on 9B) | free tier (neurons) | $0.150 |
 | shots | 12 | no video endpoint, Ken Burns | local FFmpeg | $0.00 |
 | music | 12 cues | no music endpoint, synthesised bed | local | $0.00 |
-| **total** | | | | **≈ $0.12** |
+| **total** | | | | **≈ $0.16** |
 
-14 images at roughly 1,500 neurons each is about 21,000 neurons against a free
-allowance of 10,000 per day, which is why the 4B model was chosen over the 9B
-one: the same 14 frames on 9B would have been about 24,000 neurons for $0.24.
-The A2 revision added 12 more candidate frames (FAILURES.md 12), $0.07 of the
-total, so read the estimate column as cost of the film plus its redo, not as the
-price of one pass. Both were run against a free Workers plan, so the dollars
-above are list price rather than a charge.
+34 images at roughly 1,500 neurons each is about 51,000 neurons against a free
+allowance of 10,000 per day, which is why the work spread over three days and
+why the 4B model was chosen over the 9B one: the same frames on 9B would have
+been about five times the neurons. The A2 revision added 12 candidate frames and
+the user-test revision added 10 more (FAILURES.md 12 and 13), $0.11 of the
+total, so read the estimate column as the cost of the film plus its two redos,
+not as the price of one pass. All of it ran against a free Workers plan, so the
+dollars above are list price rather than a charge.
+
+The user-test pass is also where the free allowance ran out: the tenth frame of
+the day was accepted, the eleventh returned `HTTP 429` code 4006 (10,000 neurons
+exhausted). That is why A3 is cropped rather than repainted, and the reason the
+next revision waits for a new day or a paid plan.
 
 The estimate that mattered was video: 4 hero shots on a Wan-class endpoint were
 budgeted at ~$0.30 per 5 s clip, or $1.20 for 89% of the spend. No such endpoint

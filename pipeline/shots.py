@@ -41,7 +41,7 @@ RENDERER = "living-still-v1"
 
 
 def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_to: float,
-                    pan: str, seed: int = 1) -> None:
+                    pan: str, seed: int = 1, grade: str | None = None) -> None:
     """Animate a still so it reads as filmed rather than as a photo on a slider.
 
     Four treatments, all deterministic and all rendered locally:
@@ -54,6 +54,8 @@ def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_t
                    stops the frame feeling locked to a tripod.
       flicker      a very small per-frame brightness wobble, the way a kerosene
                    lamp or a practical light actually behaves.
+      grade        the scene's eq correction from style.grades, if any. A scene
+                   is graded as a scene, not per shot, so its shots still match.
       grain        temporal luma noise with a fixed seed: adds texture and, because
                    the seed is fixed, keeps the stage reproducible.
 
@@ -83,21 +85,27 @@ def render_kenburns(source, target, *, duration: float, zoom_from: float, zoom_t
     }
     x_expr, y_expr = offsets.get(pan, offsets["none"])
     flicker = "0.004*sin(2*PI*t/1.9)+0.002*sin(2*PI*t/0.83)"
-    common.ff(
-        "-loop", "1", "-framerate", FPS, "-i", source, "-t", round(duration, 3),
-        "-vf",
+    # Built as one string: -vf takes exactly one argument, so the chain may not be
+    # split across positional arguments.
+    chain = (
         f"scale={WIDTH * 2}:{HEIGHT * 2}:force_original_aspect_ratio=increase:flags=lanczos,"
         f"crop={WIDTH * 2}:{HEIGHT * 2},"
         f"zoompan=z='{zoom}':x='{x_expr}{drift_x}':y='{y_expr}{drift_y}'"
         f":d=1:s={WIDTH}x{HEIGHT}:fps={FPS},"
-        f"eq=brightness='{flicker}':eval=frame,"
-        f"noise=c0s=3:c0f=t+u:c0_seed={seed},unsharp=5:5:0.35,format=yuv420p",
+        f"eq=brightness='{flicker}':eval=frame"
+    )
+    if grade:
+        chain += f",{grade}"
+    chain += f",noise=c0s=3:c0f=t+u:c0_seed={seed},unsharp=5:5:0.35,format=yuv420p"
+    common.ff(
+        "-loop", "1", "-framerate", FPS, "-i", source, "-t", round(duration, 3),
+        "-vf", chain,
         "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
         "-pix_fmt", "yuv420p", "-r", FPS, target,
     )
 
 
-def conform(source, target, *, duration: float, loop: bool) -> None:
+def conform(source, target, *, duration: float, loop: bool, grade: str | None = None) -> None:
     """Force a generated clip onto the film's grid: 1080x1920, 24 fps, exact length."""
     args = ["-i", source]
     if loop:
@@ -105,7 +113,8 @@ def conform(source, target, *, duration: float, loop: bool) -> None:
     common.ff(
         *args, "-t", round(duration, 3),
         "-vf", f"scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
-               f"crop={WIDTH}:{HEIGHT},fps={FPS},format=yuv420p",
+               f"crop={WIDTH}:{HEIGHT},fps={FPS}," + (f"{grade}," if grade else "") +
+               "format=yuv420p",
         "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
         "-pix_fmt", "yuv420p", target,
     )
@@ -168,9 +177,10 @@ def run(storyboard: dict, args, only) -> None:
         target = out_path("clips", f"{shot['id']}.mp4")
         duration = durations.get(shot["id"], shot["duration_s"])
         kb = shot.get("kenburns") or {}
+        grade = (storyboard.get("style", {}).get("grades") or {}).get(shot["scene"].lower())
         key = common.artifact_key(
             "clip", shot["id"], common.sha256_file(keyframe), duration, shot["mode"], kb,
-            shot.get("motion"), mode, RENDERER,
+            shot.get("motion"), mode, RENDERER, grade,
         )
         if common.is_fresh(target, key) and not args.force:
             print(f"  {shot['id']}: cached")
@@ -184,7 +194,7 @@ def run(storyboard: dict, args, only) -> None:
         if shot["mode"] == "wan" and mode == "real":
             temp = try_video(storyboard, shot, keyframe, duration, shot["keyframe"].get("seed", 1))
             if temp:
-                conform(temp, target, duration=duration, loop=True)
+                conform(temp, target, duration=duration, loop=True, grade=grade)
                 temp.unlink(missing_ok=True)
                 rendered = True
                 common.log_run(stage="shots", operation="render", provider="local", model="ffmpeg",
@@ -197,6 +207,7 @@ def run(storyboard: dict, args, only) -> None:
                 keyframe, target, duration=duration,
                 zoom_from=kb.get("zoom_from", 1.0), zoom_to=kb.get("zoom_to", 1.08),
                 pan=kb.get("pan", "in"), seed=shot["keyframe"].get("seed", 1),
+                grade=grade,
             )
             if shot["mode"] == "wan" and mode == "real":
                 common.log_run(stage="shots", operation="render", provider="local", model="ffmpeg",
